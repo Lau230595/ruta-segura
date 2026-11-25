@@ -87,7 +87,7 @@
 </header>
 
 <div id="signal">
-  <div class="minilight" aria-hidden="true"><i id="mlRed"></i><i id="mlGreen"></i></div>
+  <div class="minilight" aria-hidden="true"><i id="mlRed"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3.5" r="2.4" stroke="none"/><path d="M12 7.5v6" stroke-width="4" fill="none"/><path d="M9.4 8.2 8.6 13.4M14.6 8.2l.8 5.2M10.8 13.3v7.4M13.2 13.3v7.4" stroke-width="2" fill="none"/></svg></i><i id="mlGreen"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="3.5" r="2.4" stroke="none"/><path d="M13 7.5 12 13" stroke-width="3.4" fill="none"/><path d="M12.6 8.3 8.8 11.8M13 8.3l3.6 2.6M12 13l-3.2 7.5M12 13l3 3.2 1.8 4.3" stroke-width="2" fill="none"/></svg></i></div>
   <div><small id="signalStreet">—</small><span id="signalText">—</span></div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -193,9 +193,9 @@
     </div>
     <h3 style="font-size:clamp(18px,2.6vh,26px)">Señales viales y reglas básicas</h3>
     <div class="sgrid">
-      <div class="sitem"><div class="dot" style="background:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><b>Verde (PASE)</b><span>Cruza por la cebra</span></div></div>
+      <div class="sitem"><div class="dot fig" style="background:#14171A;color:#2EE07A"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="3.5" r="2.4" stroke="none"/><path d="M13 7.5 12 13" stroke-width="3.4" fill="none"/><path d="M12.6 8.3 8.8 11.8M13 8.3l3.6 2.6M12 13l-3.2 7.5M12 13l3 3.2 1.8 4.3" stroke-width="2" fill="none"/></svg></div><div><b>Verde (PASE)</b><span>Cruza por la cebra</span></div></div>
       <div class="sitem"><div class="dot" style="background:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="3" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="13"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg></div><div><b>Ámbar</b><span>Va a cambiar: no inicies</span></div></div>
-      <div class="sitem"><div class="dot" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div><div><b>Rojo (ALTO)</b><span>Espera en la vereda</span></div></div>
+      <div class="sitem"><div class="dot fig" style="background:#14171A;color:#FF3B30"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3.5" r="2.4" stroke="none"/><path d="M12 7.5v6" stroke-width="4" fill="none"/><path d="M9.4 8.2 8.6 13.4M14.6 8.2l.8 5.2M10.8 13.3v7.4M13.2 13.3v7.4" stroke-width="2" fill="none"/></svg></div><div><b>Rojo (ALTO)</b><span>Espera en la vereda</span></div></div>
       <div class="sitem"><div class="dot" style="border-radius:10px;background:#4B5057 repeating-linear-gradient(90deg,#FFC400 0 7px,transparent 7px 14px)"></div><div><b>Cebra</b><span>Cruza solo aquí</span></div></div>
       <div class="sitem"><div class="dot" style="background:#3E5B3A"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg></div><div><b>Policía</b><span>Su señal manda</span></div></div>
       <div class="sitem"><div class="dot" style="background:#fff;border:3px solid var(--red)"><svg viewBox="0 0 24 24" fill="#D32F2F"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div><div><b>Ambulancia</b><span>Cede siempre el paso</span></div></div>

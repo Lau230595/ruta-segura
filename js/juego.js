@@ -628,8 +628,8 @@ function updateHud() {
   $('signalStreet').textContent = si.street;
   $('signalText').textContent = si.text;
   $('signal').style.borderColor = si.color;
-  $('mlRed').style.background = si.red ? '#E53935' : '#3a3f45';
-  $('mlGreen').style.background = si.green || '#3a3f45';
+  $('mlRed').style.color = si.red ? '#FF3B30' : '#30353B';
+  $('mlGreen').style.color = si.green || '#30353B';
 }
 
 /* =========================================================
@@ -648,18 +648,46 @@ function rr(c, x, y, w, h, r) {
   c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
-function lamp(x, y, color, on) {
-  ctx.save(); ctx.fillStyle = on ? color : '#2c3136';
-  if (on) { ctx.shadowColor = color; ctx.shadowBlur = 22; }
-  ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+// Semáforo peatonal: figura de pie (ALTO, rojo) y figura caminando (PASE, verde)
+function pedFigure(cx, cy, walking) {
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (walking) {
+    ctx.beginPath(); ctx.arc(cx + 1.5, cy - 9.5, 3.6, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx + 1, cy - 4.5); ctx.lineTo(cx - 0.5, cy + 3); ctx.stroke();
+    ctx.lineWidth = 2.8; ctx.beginPath();
+    ctx.moveTo(cx + 0.5, cy - 3.5); ctx.lineTo(cx - 4.5, cy + 1.5);                         // brazo atrás
+    ctx.moveTo(cx + 1, cy - 3.5); ctx.lineTo(cx + 5.5, cy);                                 // brazo adelante
+    ctx.moveTo(cx - 0.5, cy + 3); ctx.lineTo(cx - 5, cy + 11.5);                            // pierna atrás
+    ctx.moveTo(cx - 0.5, cy + 3); ctx.lineTo(cx + 3.5, cy + 7); ctx.lineTo(cx + 6, cy + 12); // pierna adelante
+    ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(cx, cy - 9.5, 3.6, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(cx, cy - 4.5); ctx.lineTo(cx, cy + 3); ctx.stroke();
+    ctx.lineWidth = 2.8; ctx.beginPath();
+    ctx.moveTo(cx - 3.5, cy - 3.5); ctx.lineTo(cx - 4.5, cy + 3.5);                         // brazos a los lados
+    ctx.moveTo(cx + 3.5, cy - 3.5); ctx.lineTo(cx + 4.5, cy + 3.5);
+    ctx.moveTo(cx - 1.6, cy + 3); ctx.lineTo(cx - 1.6, cy + 12);                            // piernas juntas
+    ctx.moveTo(cx + 1.6, cy + 3); ctx.lineTo(cx + 1.6, cy + 12);
+    ctx.stroke();
+  }
+}
+function lamp(x, y, color, on, walking) {
+  ctx.save();
+  ctx.fillStyle = '#0B0D0F'; rr(ctx, x - 16, y - 16, 32, 32, 6); ctx.fill();               // visor del foco
+  const c = on ? color : '#30353B';
+  ctx.fillStyle = c; ctx.strokeStyle = c;
+  if (on) { ctx.shadowColor = color; ctx.shadowBlur = 18; }
+  ctx.translate(x, y + 0.5); ctx.scale(1.05, 1.05);
+  pedFigure(0, 0, walking);
+  ctx.restore();
 }
 function trafficLight(x, y, ps, poleTop, poleBot, off) {
-  ctx.fillStyle = '#3A3F45'; ctx.fillRect(x + 15, poleTop, 6, poleBot - poleTop);
-  ctx.fillStyle = '#14171A'; rr(ctx, x, y, 36, 70, 9); ctx.fill();
-  if (off) { lamp(x + 18, y + 18, '#000', false); lamp(x + 18, y + 52, '#000', false); return; }
+  ctx.fillStyle = '#3A3F45'; ctx.fillRect(x + 17, poleTop, 6, poleBot - poleTop);
+  ctx.fillStyle = '#14171A'; rr(ctx, x, y, 40, 78, 9); ctx.fill();
+  if (off) { lamp(x + 20, y + 20, '#000', false, false); lamp(x + 20, y + 58, '#000', false, true); return; }
   const blink = Math.floor(g.time * 4) % 2 === 0;
-  lamp(x + 18, y + 18, '#E53935', ps.s === 'red');
-  lamp(x + 18, y + 52, ps.s === 'amber' ? '#FF9800' : '#2ECC71', ps.s === 'green' || (ps.s === 'amber' && blink));
+  lamp(x + 20, y + 20, '#FF3B30', ps.s === 'red', false);
+  lamp(x + 20, y + 58, ps.s === 'amber' ? '#FF9800' : '#2EE07A', ps.s === 'green' || (ps.s === 'amber' && blink), true);
 }
 function label(text, x, y, bg, fg, size = 20) {
   ctx.font = `800 ${size}px Lexend, system-ui, sans-serif`;

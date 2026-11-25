@@ -71,8 +71,11 @@ body.playing #hud{display:flex}
 body.playing #signal{display:flex}
 #signal small{display:block;font-size:clamp(11px,1.6vh,15px);color:var(--muted);font-weight:600;letter-spacing:.5px}
 #signalText{display:block;font-size:clamp(14px,2.1vh,22px);font-weight:700}
-.minilight{width:22px;height:40px;padding:3px;background:var(--ink2);border-radius:6px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;flex:none}
-.minilight i{width:14px;height:14px;border-radius:50%;background:#3a3f45;display:block}
+.minilight{width:28px;height:52px;padding:2px;background:#0B0D0F;border-radius:7px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;flex:none}
+.minilight i{width:24px;height:24px;display:block;color:#30353B}
+.minilight svg{width:100%;height:100%;display:block}
+.dot.fig{border-radius:12px}
+.dot.fig svg{width:30px;height:30px}
 #toast{position:fixed;left:50%;top:calc(var(--hud) + 14px);transform:translate(-50%,-10px);z-index:12;display:flex;align-items:center;gap:12px;
   padding:12px 24px 12px 14px;border-radius:40px;font-size:clamp(16px,2.6vh,28px);font-weight:700;opacity:0;pointer-events:none;
   max-width:calc(100% - 24px);text-align:left}
