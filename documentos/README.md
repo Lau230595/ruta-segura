@@ -10,7 +10,8 @@ RutaSegura/
 ├── css/
 │   └── estilos.css     Paleta, tipografía y diseño de cada pantalla
 ├── js/
-│   └── juego.js        Niveles, tráfico, reglas, retroalimentación y métricas IHC
+│   ├── juego.js        Modos Peatón y Conductor, tráfico, reglas, retroalimentación y métricas IHC
+│   └── examen.js       Examen de reglas tipo MTC (banco de 40 preguntas)
 ├── .vscode/
 │   ├── extensions.json Recomienda la extensión Live Server
 │   ├── settings.json   Puerto 5500 y acceso desde otros dispositivos de la red
@@ -41,6 +42,12 @@ También funciona con doble clic en `index.html`.
 2. En el celular, abre el navegador y entra a `http://192.168.1.25:5500` (usa tu IP).
 3. Si no carga, permite a VS Code en el firewall de Windows (redes privadas).
 
+## Modos de juego
+
+- **Peatón** (5 niveles): cruza Arequipa respetando semáforos, cebras, ambulancias y policía; incluye noche y lluvia.
+- **Conductor** (3 niveles, tipo examen práctico): cinturón, límites de velocidad (30 km/h en calles y zonas escolares, 50 km/h en avenidas), semáforo vehicular, ceder el paso al peatón, PARE, CEDA EL PASO, policía, ambulancia y celular. Termina con una nota: se aprueba con 80/100 y sin faltas eliminatorias.
+- **Examen MTC**: 40 preguntas basadas en el Reglamento Nacional de Tránsito. Práctica de 10 con explicación o simulacro de 40 preguntas en 40 minutos (se aprueba con 35, como el examen oficial).
+
 ## Controles
 
 | Acción | PC | Celular / tablet |
@@ -48,6 +55,10 @@ También funciona con doble clic en `index.html`.
 | Moverse | W A S D o flechas | Flechas en pantalla |
 | Guardar / mirar el celular | Q / E | Botones de la notificación |
 | Pausa | ESC | Botón de pausa |
+| Conductor: acelerar / frenar | → / ← (o D / A, Espacio frena) | ▶ / ◀ en pantalla |
+| Conductor: cambiar de carril | ↑ / ↓ (o W / S) | ▲ / ▼ en pantalla |
+| Conductor: cinturón | C | Botón "Abróchate el cinturón" |
+| Examen: responder | 1 2 3 4 y Enter | Tocar la opción |
 | Empezar / continuar | Enter | Tocar el botón |
 
 ## Datos para la evaluación de usabilidad
@@ -64,6 +75,8 @@ Los datos se guardan en el navegador de cada equipo (localStorage). Descárgalos
 |---|---|---|
 | Calles, destinos y dificultad de los niveles | `js/juego.js` | `const LEVELS` |
 | Textos de las normas (micro-explicaciones) | `js/juego.js` | `const LESSONS` |
+| Niveles del modo Conductor | `js/juego.js` | `const DLEVELS` |
+| Preguntas del examen | `js/examen.js` | `const BANCO` |
 | Logros | `js/juego.js` | `const LOGROS` |
 | Duración del semáforo | `js/juego.js` | `CYCLE`, `T_GREEN`, `T_AMBER` |
 | Colores de la interfaz | `css/estilos.css` | `:root` |
@@ -71,4 +84,4 @@ Los datos se guardan en el navegador de cada equipo (localStorage). Descárgalos
 ## Notas
 
 - La tipografía Lexend se descarga de Google Fonts; sin internet el juego funciona igual con una fuente del sistema.
-- Las normas citadas provienen del TUO del Reglamento Nacional de Tránsito (D.S. N.° 016-2009-MTC): Art. 57, 68, 70 y 77.
+- Las normas citadas provienen del TUO del Reglamento Nacional de Tránsito (D.S. N.° 016-2009-MTC): Art. 49, 57, 58, 60, 63, 64, 65, 68, 70, 77 y 162 (modificado por D.S. 025-2021-MTC), e infracciones M25 y G28. El examen usa preguntas propias basadas en esas normas; para estudiar, complementar con el balotario oficial del MTC.

@@ -101,9 +101,16 @@
 <div id="tutorial" aria-live="polite">
   <div id="tcount" aria-label="Segundos de tutorial">10</div>
   <span>
-    <span class="only-keys">Muévete con <span class="keys"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></span> o las flechas · </span>
-    <span class="only-touch">Muévete con las flechas de la pantalla · </span>
-    <b style="color:var(--yellow)">Espera el verde y cruza por la cebra</b>
+    <span class="only-walk">
+      <span class="only-keys">Muévete con <span class="keys"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></span> o las flechas · </span>
+      <span class="only-touch">Muévete con las flechas de la pantalla · </span>
+      <b style="color:var(--yellow)">Espera el verde y cruza por la cebra</b>
+    </span>
+    <span class="only-drive">
+      <span class="only-keys"><span class="key">→</span> acelera · <span class="key">←</span> frena · <span class="key">↑</span><span class="key">↓</span> carril · </span>
+      <span class="only-touch">▶ acelera · ◀ frena · ▲▼ carril · </span>
+      <b style="color:var(--yellow)">Abróchate el cinturón y respeta el límite</b>
+    </span>
   </span>
 </div>
 
@@ -130,6 +137,17 @@
   </div>
 </div>
 
+<!-- ===================== Modo conductor: velocímetro y cinturón ===================== -->
+<div id="speedo" aria-label="Velocímetro">
+  <div class="lim" title="Velocidad máxima de la zona"><span id="spLim">50</span></div>
+  <div class="spv"><b id="spVal">0</b><small>km/h</small></div>
+  <div id="spBelt" class="belt" title="Cinturón de seguridad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2.4"/><path d="M6.5 21v-6.5a5.5 5.5 0 0 1 11 0V21"/><path d="M8 9.5 17 19" stroke-width="3.4"/><rect x="14.5" y="15.5" width="4" height="3" rx="0.8" fill="currentColor" stroke="none"/></svg></div>
+</div>
+<button id="beltBtn" aria-label="Abrocharse el cinturón de seguridad (tecla C)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2.4"/><path d="M6.5 21v-6.5a5.5 5.5 0 0 1 11 0V21"/><path d="M8 9.5 17 19" stroke-width="3.4"/><rect x="14.5" y="15.5" width="4" height="3" rx="0.8" fill="currentColor" stroke="none"/></svg>
+  Abróchate el cinturón <span class="kbd only-keys">C</span>
+</button>
+
 <!-- ===================== Controles táctiles ===================== -->
 <div id="dpad" aria-label="Controles táctiles">
   <span></span>
@@ -153,7 +171,16 @@
       <circle cx="42" cy="76" r="7" fill="#14171A"/><circle cx="78" cy="44" r="7" fill="#14171A"/>
     </svg>
     <h1 class="title">RUTA SEGURA</h1>
-    <p class="tag">5 rutas por Arequipa. Cada cruce es una decisión.</p>
+    <p class="tag">Aprende las normas de tránsito en Arequipa: a pie, al volante y para tu examen MTC.</p>
+    <div class="modes" role="tablist" aria-label="Elegir modo de juego">
+      <button role="tab" data-mode="peaton" aria-selected="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="3.5" r="2.4" stroke="none"/><path d="M13 7.5 12 13" stroke-width="3.4" fill="none"/><path d="M12.6 8.3 8.8 11.8M13 8.3l3.6 2.6M12 13l-3.2 7.5M12 13l3 3.2 1.8 4.3" stroke-width="2" fill="none"/></svg>Peatón</button>
+      <button role="tab" data-mode="conductor" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M12 14.2V21M9.9 11.3 3.6 9.6M14.1 11.3l6.3-1.7"/></svg>Conductor</button>
+      <button role="tab" data-mode="examen" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Examen MTC</button>
+    </div>
+    <p id="modeHint" class="hint" style="margin:-6px 0 0"></p>
     <div class="lvrow" id="lvRow" role="group" aria-label="Elegir nivel"></div>
     <button id="playBtn" class="btn primary">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg><span id="playTxt">JUGAR</span>
@@ -225,7 +252,7 @@
     <div class="rhead">
       <div class="badge" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div>
       <div>
-        <p style="font-size:clamp(13px,1.8vh,16px);font-weight:700;color:var(--red);letter-spacing:1px">APRENDE DE TU ERROR · −1 VIDA</p>
+        <p id="lTag" style="font-size:clamp(13px,1.8vh,16px);font-weight:700;color:var(--red);letter-spacing:1px">APRENDE DE TU ERROR · −1 VIDA</p>
         <h2 id="lTitle" style="font-size:clamp(24px,4vh,38px);font-weight:800;line-height:1.15">—</h2>
       </div>
     </div>
@@ -314,6 +341,45 @@
   </div>
 </section>
 
+<!-- ===================== Examen de reglas de tránsito (MTC) ===================== -->
+<section id="sExam" class="screen dim" aria-label="Examen de reglas de tránsito">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="exTitle" style="width:min(920px,100%)">
+    <div class="phead">
+      <div>
+        <p id="exMode" class="exmode">PRÁCTICA</p>
+        <h2 id="exTitle" style="font-size:clamp(22px,3.6vh,34px)">Pregunta 1 de 10</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span id="exTimer" class="extimer" aria-live="off"></span>
+        <button class="closebtn" id="exClose" aria-label="Salir del examen"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+      </div>
+    </div>
+    <div class="exbar" aria-hidden="true"><i id="exProg"></i></div>
+    <div id="exQ" style="display:flex;flex-direction:column;gap:clamp(12px,2.2vh,22px)">
+      <p id="exTema" class="extema"></p>
+      <p id="exText" class="extext"></p>
+      <div id="exOpts" class="exopts" role="radiogroup" aria-labelledby="exText"></div>
+      <div id="exFb" class="exfb" role="status" aria-live="polite" hidden></div>
+      <button id="exNext" class="btn primary" style="margin:0" disabled>Siguiente</button>
+      <p class="hint only-keys" style="color:#5A6066;margin:0">Responde con <span class="key">1</span> <span class="key">2</span> <span class="key">3</span> <span class="key">4</span> · <span class="key">ENTER</span> para continuar</p>
+    </div>
+    <div id="exRes" style="display:none;flex-direction:column;gap:16px">
+      <div class="rhead">
+        <div id="exBadge" class="badge"></div>
+        <div>
+          <h2 id="exResTitle" style="font-size:clamp(26px,4.6vh,44px);font-weight:800">—</h2>
+          <p id="exResSub" style="font-size:clamp(14px,2vh,19px);color:#3A3F45">—</p>
+        </div>
+      </div>
+      <div class="card"><h3>Repaso de respuestas incorrectas</h3><ul id="exReview" class="rlist"></ul></div>
+      <div class="btnrow">
+        <button id="exAgain" class="btn primary" style="margin:0">Repetir examen</button>
+        <button id="exMenu" class="btn">Menú</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== Datos IHC (modal del equipo) ===================== -->
 <section id="sData" class="screen dim" aria-label="Datos IHC">
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dTitle" style="width:min(1180px,100%)">
@@ -348,5 +414,6 @@
 </section>
 
 <script src="js/juego.js"></script>
+<script src="js/examen.js"></script>
 </body>
 </html>

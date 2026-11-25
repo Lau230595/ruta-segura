@@ -42,6 +42,7 @@ const CYCLE = 10, T_GREEN = 4.5, T_AMBER = 6.0;
 const CAR_GAP = 26, PLAYER_SPEED = 230;
 const MULT = [1, 1, 1.5, 2, 2.5, 3];
 let LV, LVI = 0, N_ROADS, META_X, WORLD_W;
+let MODE = 'peaton';   // peaton | conductor | examen
 
 const VEH = {
   auto:      { w: 54, h: 96,  colors: ['#1E88E5', '#C62828', '#ECEFF1', '#455A64'] },
@@ -73,11 +74,54 @@ const LESSONS = {
   policia: { t: 'No obedeciste al policía de tránsito',
     n: 'Las indicaciones del policía asignado al control del tránsito prevalecen sobre los semáforos y las demás señales.',
     ref: 'Reglamento Nacional de Tránsito, Art. 57 (obediencia al efectivo policial)',
-    why: 'Cuando el policía dirige el cruce, el semáforo se apaga: su señal es la que cuenta.' }
+    why: 'Cuando el policía dirige el cruce, el semáforo se apaga: su señal es la que cuenta.' },
+  // ----- Modo conductor -----
+  rojo_c: { t: 'Pasaste con la luz roja',
+    n: 'La luz roja indica detención: debes detenerte antes de la línea de parada. Con ámbar, detente si puedes hacerlo con seguridad; si ya no puedes, cruza con precaución y despeja la intersección.',
+    ref: 'Reglamento Nacional de Tránsito, Art. 49 (significado de las luces semafóricas)',
+    why: 'Pasarse la luz roja es una falta eliminatoria en el examen práctico y una de las causas más graves de choques.' },
+  peaton_c: { t: 'No cediste el paso al peatón',
+    n: 'El peatón tiene derecho de paso en el crucero peatonal y frente a los vehículos que giran con luz verde. Detente antes de la cebra y espera que termine de cruzar.',
+    ref: 'Reglamento Nacional de Tránsito, Arts. 63 y 64 (derecho de paso del peatón)',
+    why: 'El peatón es el usuario más vulnerable de la vía: un error tuyo puede costarle la vida.' },
+  velocidad: { t: 'Exceso de velocidad',
+    n: 'Límites máximos en zona urbana: 30 km/h en calles y jirones, 50 km/h en avenidas, 80 km/h en vías expresas, y 30 km/h en zonas escolares y de hospitales.',
+    ref: 'Reglamento Nacional de Tránsito, Art. 162 (modificado por D.S. 025-2021-MTC)',
+    why: 'A mayor velocidad, mayor distancia para frenar y lesiones más graves en un atropello.' },
+  pare: { t: 'No te detuviste en la señal PARE',
+    n: 'Ante PARE (o luz roja intermitente) debes detenerte por completo antes de la línea y ceder el paso; avanza solo cuando sea seguro.',
+    ref: 'Reglamento Nacional de Tránsito, Art. 49 y señal reglamentaria PARE',
+    why: 'Reducir la velocidad no basta: el examinador exige la parada total del vehículo.' },
+  ceda: { t: 'No cediste el paso',
+    n: 'La señal CEDA EL PASO obliga a reducir la velocidad y, si es necesario, detenerte para dejar pasar a los vehículos de la vía con preferencia.',
+    ref: 'Señal reglamentaria CEDA EL PASO (Reglamento Nacional de Tránsito)',
+    why: 'Entrar a la intersección sin ceder el paso provoca choques laterales, los más peligrosos.' },
+  emergencia_c: { t: 'No cediste el paso a la ambulancia',
+    n: 'Ante un vehículo de emergencia que usa sirena y luces, ubícate en el carril derecho y disminuye la velocidad o detente para dejarlo pasar.',
+    ref: 'Reglamento Nacional de Tránsito, infracción M25 (no dar preferencia a vehículos de emergencia)',
+    why: 'Cada segundo cuenta para la persona que va en la ambulancia.' },
+  policia_c: { t: 'No obedeciste al policía de tránsito',
+    n: 'Las indicaciones del policía de tránsito prevalecen sobre los semáforos; cuando dirige una intersección, los semáforos se apagan.',
+    ref: 'Reglamento Nacional de Tránsito, Arts. 57 y 60',
+    why: 'El policía ve el tránsito completo: su señal coordina a todos los que cruzan.' },
+  celular_c: { t: 'Usaste el celular mientras conducías',
+    n: 'El conductor no debe usar el celular mientras conduce, ni siquiera sujetando el volante con una mano.',
+    ref: 'Reglamento Nacional de Tránsito (prohibición del uso del celular al conducir)',
+    why: 'Mirar el celular unos segundos equivale a manejar a ciegas varias decenas de metros.' },
+  cinturon: { t: 'Arrancaste sin el cinturón de seguridad',
+    n: 'El cinturón de seguridad es obligatorio para el conductor y todos los ocupantes; no usarlo es infracción grave.',
+    ref: 'Reglamento Nacional de Tránsito, infracción G28',
+    why: 'El cinturón reduce de forma importante el riesgo de muerte en un choque. En el examen, es lo primero que revisan.' },
+  choque_c: { t: 'Chocaste',
+    n: 'Mantén una distancia que te permita detenerte con seguridad y no entres a la intersección si otro vehículo tiene preferencia.',
+    ref: 'Reglamento Nacional de Tránsito (distancia de seguimiento y preferencia de paso)',
+    why: 'Un choque es falta eliminatoria en el examen práctico.' }
 };
 const WHY_RAIN = 'Con la pista mojada los vehículos necesitan más distancia para frenar: espera a que estén detenidos.';
 const WHY_NIGHT = 'De noche los conductores te ven tarde: cruza solo por zonas iluminadas y cuando los autos estén detenidos.';
-const KIND_LABEL = { rojo: 'Cruzar en rojo', fuera: 'Cruzar fuera de la cebra', choque: 'Atropello', emergencia: 'No ceder a la ambulancia', policia: 'Desobedecer al policía' };
+const KIND_LABEL = { rojo: 'Cruzar en rojo', fuera: 'Cruzar fuera de la cebra', choque: 'Atropello', emergencia: 'No ceder a la ambulancia', policia: 'Desobedecer al policía',
+  rojo_c: 'Pasar con luz roja', peaton_c: 'No ceder el paso al peatón', velocidad: 'Exceso de velocidad', pare: 'No parar en PARE', ceda: 'No ceder el paso',
+  emergencia_c: 'No ceder a la ambulancia', policia_c: 'Desobedecer al policía', celular_c: 'Usar el celular al conducir', cinturon: 'Sin cinturón', choque_c: 'Choque' };
 const TIPS = {
   choque: 'Antes de cruzar, mira a ambos lados aunque el semáforo esté en verde.',
   rojo: 'Si el semáforo peatonal está en rojo, espera en la vereda aunque no veas autos.',
@@ -104,7 +148,9 @@ const LOGROS = {
   perfecto:    'Perfección (3 estrellas)',
   noctambulo:  'Visible de noche (nivel nocturno)',
   impermeable: 'Bajo la lluvia (nivel con lluvia)',
-  campeon:     '¡Llegaste a la Plaza de Armas!'
+  campeon:     '¡Llegaste a la Plaza de Armas!',
+  brevete:     '¡Aprobaste el examen práctico de manejo!',
+  teorico:     'Teoría aprobada (35 de 40 en el simulacro MTC)'
 };
 
 /* =========================================================
@@ -179,7 +225,7 @@ function loadStore() { try { const s = JSON.parse(localStorage.getItem(STORE_KEY
 function saveStore(s) { memStore = s; try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {} }
 function loadProg() {
   try { const p = JSON.parse(localStorage.getItem(PROG_KEY)); if (p && p.stars) return p; } catch (e) {}
-  return memProg || { unlocked: 1, stars: {}, best: {}, logros: {}, waitsTotal: 0 };
+  return memProg || { unlocked: 1, unlockedC: 1, stars: {}, best: {}, logros: {}, waitsTotal: 0 };
 }
 function saveProg(p) { memProg = p; try { localStorage.setItem(PROG_KEY, JSON.stringify(p)); } catch (e) {} }
 
@@ -189,11 +235,12 @@ function saveProg(p) { memProg = p; try { localStorage.setItem(PROG_KEY, JSON.st
 let state = 'boot';   // boot | menu | controls | data | intro | playing | paused | lesson | results
 let g, player, roads, quesos, notif = null, lastSessionId = null, selLevel = 0;
 let yExtra = 0;
-const keys = { up: false, down: false, left: false, right: false };
+const keys = { up: false, down: false, left: false, right: false, brake: false };
 
 function seeded(seed) { let s = seed * 9301 + 49297; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
 
 function setupLevel(i) {
+  if (MODE === 'conductor') { dSetup(i); return; }
   LVI = i; LV = LEVELS[i]; N_ROADS = LV.streets.length;
   META_X = FIRST_X + (N_ROADS - 1) * GAP_X + ROAD_W + 460;
   WORLD_W = META_X + 420;
@@ -232,6 +279,16 @@ function reset(levelIdx) {
         tutorialT: LVI === 0 ? 10 : 0, moved: false, movedT: 0, fx: null, lastHud: '',
         particles: [], floats: [], shake: 0 };
   player = { x: 150, y: 300, r: 22, angle: 0, inv: 0, roadIdx: -1, side: null, crossing: null };
+  if (MODE === 'conductor') {
+    roads = []; quesos = [];
+    Object.assign(g, { kinds: {}, elim: 0, graves: 0, leves: 0, belt: false, beltWarned: false, zone: null, ambDone: false, phoneDone: false });
+    player = { x: 160, y: LANE_R, ty: LANE_R, v: 0, r: 26, angle: 0, inv: 0, braking: false };
+    hideNotif(); $('phoneBig').classList.remove('show');
+    dBuild();
+    for (let k = 0; k < 120; k++) dTraffic(1 / 30);
+    g.time = 0;
+    return;
+  }
   roads = buildRoads();
   quesos = buildQuesos();
   hideNotif(); $('phoneBig').classList.remove('show');
@@ -380,6 +437,7 @@ function infraction(kind, text, road, why) {
 let lessonTimer = null;
 function showLesson(kind, why) {
   const L = LESSONS[kind];
+  $('lTag').textContent = MODE === 'conductor' ? (ELIM[kind] ? 'FALTA ELIMINATORIA · −1 VIDA' : 'FALTA GRAVE · −10 PUNTOS DE NOTA') : 'APRENDE DE TU ERROR · −1 VIDA';
   $('lTitle').textContent = L.t; $('lNorm').textContent = L.n; $('lRef').textContent = L.ref; $('lWhy').textContent = why || L.why;
   g.lessons++; g.pendingEnd = g.lives <= 0;
   log('leccion', null, kind);
@@ -411,6 +469,7 @@ function resolveNotif(choice) {
   const road = notif.road; hideNotif();
   log('distraccion_' + choice, road);
   if (choice === 'guardar') { g.distrEvitadas++; g.score += 20; feedback('ok', '+20 · Guardaste el celular'); award('desconectado'); }
+  else if (choice === 'ver' && MODE === 'conductor') { g.distrVistas++; g.distractT = 2.5; $('phoneBig').classList.add('show'); dInfraction('celular_c', 'Usaste el celular mientras conducías', road); }
   else if (choice === 'ver') { g.distrVistas++; g.distractT = 3; breakStreak(); $('phoneBig').classList.add('show'); feedback('warn', 'Distraído: no ves el tránsito'); }
   else { g.distrEvitadas++; }
 }
@@ -590,6 +649,7 @@ function updateTutorial(dt) {
 
 /* ---------- HUD ---------- */
 function signalInfo() {
+  if (MODE === 'conductor') return dSignalInfo();
   const next = roads.find(r => !r.done && r.x + r.w > player.x - player.r);
   if (!next) return { street: LV.dest, text: 'Sigue hasta la META', color: '#FFC400', red: false, green: null };
   const ps = pedState(next), s = Math.ceil(ps.left);
@@ -757,6 +817,7 @@ function drawQueso(q) {
 }
 
 function draw() {
+  if (MODE === 'conductor') return dDraw();
   const W = canvas.width, H = canvas.height;
   const inGame = state === 'playing' || state === 'paused' || state === 'lesson' || state === 'intro';
   const hudPx = inGame ? hud.getBoundingClientRect().height * dpr : 0;
@@ -938,6 +999,544 @@ function draw() {
 }
 
 /* =========================================================
+   9-B. MODO CONDUCTOR · Examen práctico de manejo
+   Reglas verificadas en el TUO del Reglamento Nacional de Tránsito:
+   Art. 49 (luces), 57 y 60 (policía), 63-64 (derecho de paso del peatón),
+   162 (velocidades, mod. D.S. 025-2021-MTC), códigos M25 (emergencia) y G28 (cinturón).
+   ========================================================= */
+const DLEVELS = [
+  { name: 'Clase de manejo', dest: 'Av. Ejército', news: ['Cinturón de seguridad', 'Semáforo vehicular', 'Ceder el paso en la cebra'],
+    zones: [ { limit: 50, label: 'Avenida' } ], npc: 2,
+    items: [ { type: 'semaforo', street: 'Calle Cruz Verde' }, { type: 'cebra', street: 'Paso peatonal' },
+             { type: 'semaforo', street: 'Av. Emmel' }, { type: 'semaforo', street: 'Av. Trinidad Morán' } ] },
+  { name: 'Calles del Centro', dest: 'Colegio Independencia', news: ['Calles a 30 km/h', 'Señal PARE', 'Zona escolar', 'CEDA EL PASO', 'Celular al volante'],
+    zones: [ { limit: 30, label: 'Calle' }, { at: 2, limit: 30, label: 'Zona escolar', school: true }, { at: 3, limit: 30, label: 'Calle' } ], npc: 2, phoneAt: 1,
+    items: [ { type: 'pare', street: 'Calle Santo Domingo' }, { type: 'semaforo', street: 'Calle Bolívar' },
+             { type: 'cebra', street: 'Zona escolar', school: true }, { type: 'ceda', street: 'Calle Melgar' }, { type: 'semaforo', street: 'Calle Jerusalén' } ] },
+  { name: 'Examen práctico', dest: 'Fin del examen', news: ['Policía de tránsito', 'Ambulancia detrás de ti', 'Cambios de límite', 'Todo lo aprendido'],
+    zones: [ { limit: 50, label: 'Avenida' }, { at: 3, limit: 30, label: 'Calle' } ], npc: 3, ambAt: 1, phoneAt: 4,
+    items: [ { type: 'semaforo', street: 'Av. Venezuela' }, { type: 'policia', street: 'Av. Goyeneche' }, { type: 'cebra', street: 'Paso peatonal' },
+             { type: 'pare', street: 'Calle Peral' }, { type: 'semaforo', street: 'Calle San Juan de Dios' }, { type: 'ceda', street: 'Calle San José' } ] }
+];
+const R_TOP = 200, R_MID = 300, R_BOT = 400, LANE_L = 250, LANE_R = 350;
+const CAR_L = 100, CAR_T = 50, KMH = 6, VMAX = 70 * KMH, ACC = 115, BRK = 560, DRAG = 38;
+const D_FIRST = 1100, D_GAP = 1000, ZEBRA_A = 80, ZEBRA_B = 20, STOP_D = 92, CROSS_W = 200;
+const DCYC = 11, D_GREEN = 5, D_AMBER = 7;
+const ELIM = { rojo_c: 1, peaton_c: 1, choque_c: 1, policia_c: 1 };
+const PED_COLORS = ['#7E57C2', '#26A69A', '#EF6C00', '#5C6BC0', '#8D6E63', '#EC407A'];
+let items = [], zones = [], npcs = [], amb = null;
+
+function dSetup(i) {
+  LVI = i; LV = DLEVELS[i]; N_ROADS = LV.items.length;
+  META_X = D_FIRST + (N_ROADS - 1) * D_GAP + 900; WORLD_W = META_X + 500;
+}
+function dBuild() {
+  items = LV.items.map((it, i) => {
+    const x = D_FIRST + i * D_GAP;
+    return Object.assign({}, it, {
+      i, x, name: it.street, stopX: x - STOP_D, zA: x - ZEBRA_A, zB: x - ZEBRA_B,
+      off: (i * 4.3 + 2 + LVI * 1.7) % DCYC, peds: [], pedT: 0.5 + Math.random(), prevS: null, amberAt: -9,
+      minV: 999, stoppedRed: false, yielded: false, lineDone: false, zebraDone: false, phoneShown: false,
+      cross: it.type === 'cebra' ? [] : [ { dir: 1, x: x + 60, cars: [], t: Math.random() }, { dir: -1, x: x + 140, cars: [], t: Math.random() * 1.5 } ]
+    });
+  });
+  zones = LV.zones.map(z => ({ x0: z.at == null ? -9999 : items[z.at].x - 450, limit: z.limit, label: z.label, school: !!z.school, flagged: false, overT: 0 }));
+  const cols = ['#1E88E5', '#C62828', '#ECEFF1', '#455A64'];
+  npcs = [];
+  for (let k = 0; k < (LV.npc || 0); k++) npcs.push({ x: 650 + k * 1450, y: k % 2 ? LANE_L : LANE_R, v: 0, w: 96, h: 48, color: cols[k % 4], wait: 0, cleared: {}, braking: false });
+  amb = null;
+}
+function zoneAt(x) { let z = zones[0]; for (const zz of zones) if (x >= zz.x0) z = zz; return z; }
+function dState(it) {
+  if (it.type !== 'semaforo' && it.type !== 'policia') return { s: 'none', left: 0 };
+  const t = (g.time + it.off) % DCYC;
+  if (t < D_GREEN) return { s: 'green', left: D_GREEN - t };
+  if (t < D_AMBER) return { s: 'amber', left: D_AMBER - t };
+  return { s: 'red', left: DCYC - t };
+}
+function pedsOnRoad(it) { return it.peds.some(p => p.y > R_TOP - 14 && p.y < R_BOT + 14); }
+// Fase "todo rojo": el tránsito transversal se detiene 1,3 s antes de tu verde para despejar el cruce.
+// Si ya estás dentro de la intersección, los autos que aún no llegan a su línea te esperan.
+function playerInBox(it) { return player.x + CAR_L / 2 > it.stopX + 4 && player.x - CAR_L / 2 < it.x + CROSS_W; }
+function crossMustStop(it) {
+  if (it.type === 'semaforo' || it.type === 'policia') { const ps = dState(it); return ps.s !== 'red' || ps.left < 1.3 || playerInBox(it); }
+  return (it.type === 'pare' || it.type === 'ceda') && playerInBox(it) && !it.crashed;
+}
+// Peligro = un auto transversal ya está en tu calzada o llegaría en menos de 3 s.
+function crossDanger(it) {
+  return it.cross.some(l => l.cars.some(c => {
+    const inRoad = c.y + c.h / 2 > R_TOP && c.y - c.h / 2 < R_BOT;
+    if (inRoad) return true;
+    if (!c.moving || c.v <= 0) return false;
+    const d = l.dir === 1 ? R_TOP - (c.y + c.h / 2) : (c.y - c.h / 2) - R_BOT;
+    return d > 0 && d / c.v < 3.0;
+  }));
+}
+
+/* ---------- tráfico transversal y peatones ---------- */
+function dTraffic(dt) {
+  for (const it of items) {
+    const ps = dState(it), stopCross = crossMustStop(it);
+    const near = player.x + CAR_L / 2 > it.zA - 260 && player.x - CAR_L / 2 < it.zB + 10 && player.v > 25;
+    const wantPeds = it.type === 'cebra' || ((it.type === 'semaforo' || it.type === 'policia') && ps.s === 'red' && ps.left > 1.6);
+    it.pedT -= dt;
+    if (wantPeds && it.pedT <= 0 && !(it.type === 'cebra' && near)) {
+      const n = it.school ? 2 + Math.floor(Math.random() * 2) : 1 + (Math.random() < .3 ? 1 : 0);
+      const dir = Math.random() < .5 ? 1 : -1;
+      for (let k = 0; k < n; k++) it.peds.push({ x: it.zA + 14 + Math.random() * 32, y: (dir > 0 ? R_TOP - 48 : R_BOT + 48) - dir * k * 28, dir,
+        v: it.school ? 44 : 54 + Math.random() * 16, kid: !!it.school, c: PED_COLORS[Math.floor(Math.random() * PED_COLORS.length)], ph: Math.random() * 6 });
+      it.pedT = it.type === 'cebra' ? (it.school ? 4.2 : 5.5) + Math.random() * 3 : 1.6 + Math.random() * 1.6;
+    }
+    for (const p of it.peds) { p.y += p.dir * p.v * dt; p.ph += dt * 9; }
+    it.peds = it.peds.filter(p => !p.gone && (p.dir > 0 ? p.y < R_BOT + 70 : p.y > R_TOP - 70));
+
+    for (const lane of it.cross) {
+      lane.t -= dt;
+      const spawnY = lane.dir === 1 ? -yExtra - 140 : WORLD_H + yExtra + 140;
+      if (lane.t <= 0) {
+        const lastC = lane.cars[lane.cars.length - 1];
+        const free = !lastC || (lane.dir === 1 ? lastC.y - lastC.h / 2 - spawnY > 110 : spawnY - (lastC.y + lastC.h / 2) > 110);
+        if (free) { const c = newCar(randomVeh(), spawnY); c.v = 250 + Math.random() * 60; lane.cars.push(c); }
+        lane.t = (it.type === 'pare' || it.type === 'ceda' ? 1.5 : 1.1) + Math.random() * 1.8;
+      }
+      for (let k = 0; k < lane.cars.length; k++) {
+        const c = lane.cars[k], ahead = lane.cars[k - 1];
+        let ny = c.y + lane.dir * c.v * dt;
+        if (lane.dir === 1) {
+          let limit = Infinity; const sl = R_TOP - 16;
+          if (stopCross && c.y + c.h / 2 <= sl + 1) limit = sl;
+          if (ahead) limit = Math.min(limit, ahead.y - ahead.h / 2 - CAR_GAP);
+          if (ny + c.h / 2 > limit) ny = Math.max(c.y, limit - c.h / 2);
+        } else {
+          let limit = -Infinity; const sl = R_BOT + 16;
+          if (stopCross && c.y - c.h / 2 >= sl - 1) limit = sl;
+          if (ahead) limit = Math.max(limit, ahead.y + ahead.h / 2 + CAR_GAP);
+          if (ny - c.h / 2 < limit) ny = Math.min(c.y, limit + c.h / 2);
+        }
+        c.moving = Math.abs(ny - c.y) > 0.05; c.y = ny;
+      }
+      lane.cars = lane.cars.filter(c => lane.dir === 1 ? c.y < WORLD_H + yExtra + 220 : c.y > -yExtra - 220);
+    }
+  }
+}
+
+/* ---------- otros autos en tu vía (respetan las reglas) ---------- */
+function dNpc(dt) {
+  for (const n of npcs) {
+    const z = zoneAt(n.x), target = z.limit * KMH * 0.88;
+    let vmax = target;
+    const front = n.x + n.w / 2;
+    for (const it of items) {
+      if (it.stopX + 6 < front && it.zA + 4 < front) continue;
+      const dist = it.stopX - front;
+      if (dist > 420) break;
+      const ps = dState(it);
+      let must = false;
+      if (it.type === 'semaforo' || it.type === 'policia') must = ps.s === 'red' || (ps.s === 'amber' && dist > 70);
+      if (it.type === 'pare' && !n.cleared[it.i]) {
+        must = true;
+        if (dist < 14 && n.v < 6) { n.wait += dt; if (n.wait > 0.9 && !crossDanger(it)) { n.cleared[it.i] = true; n.wait = 0; } }
+      }
+      if (it.type === 'ceda' && crossDanger(it) && dist > 0) must = true;
+      if (pedsOnRoad(it) && front < it.zA + 2) must = true;
+      if (must && dist > -4) vmax = Math.min(vmax, Math.sqrt(Math.max(0, 2 * BRK * 0.55 * Math.max(0, dist - 6))));
+      break;
+    }
+    // distancia con el vehículo de adelante (otro auto o tú)
+    let gap = Infinity;
+    for (const o of npcs.concat([{ x: player.x, y: player.y, w: CAR_L }])) {
+      if (o === n || Math.abs(o.y - n.y) > 30 || o.x <= n.x) continue;
+      gap = Math.min(gap, o.x - o.w / 2 - front);
+    }
+    if (gap < Infinity) vmax = Math.min(vmax, Math.sqrt(Math.max(0, 2 * BRK * 0.55 * Math.max(0, gap - 34))));
+    n.braking = vmax < n.v - 2;
+    n.v = n.v < vmax ? Math.min(vmax, n.v + ACC * 0.75 * dt) : Math.max(vmax, n.v - BRK * dt);
+    n.x += n.v * dt;
+  }
+  npcs = npcs.filter(n => n.x < WORLD_W + 400);
+}
+
+/* ---------- puntaje del examen ---------- */
+function dNota() { return Math.max(0, 100 - 20 * (g.elim || 0) - 10 * (g.graves || 0) - 5 * (g.leves || 0)); }
+function dGood(it, pts, msg) {
+  g.streak++; g.maxStreak = Math.max(g.maxStreak, g.streak);
+  const m = MULT[Math.min(g.streak, 5)], total = Math.round(pts * m);
+  g.score += total; g.evitadas++;
+  if (g.firstSafe == null) { g.firstSafe = g.play; award('primer'); }
+  if (g.streak >= 5) award('racha5');
+  feedback('ok', m > 1 ? `+${total} · ${msg} · racha x${m}` : `+${total} · ${msg}`, m);
+  floatText(player.x, player.y - 56, '+' + total, '#2ECC71');
+  burst(player.x, player.y, 22, ['#FFC400', '#2ECC71', '#1E88E5', '#FFFFFF']);
+  log('decision_correcta', it, msg);
+}
+function dRisk(it, msg) {
+  g.leves++; g.riesgos++; breakStreak();
+  feedback('warn', msg + ' · falta leve (−5)');
+  log('falta_leve', it, msg);
+}
+function dInfraction(kind, text, it, why) {
+  const elim = !!ELIM[kind];
+  g.cometidas++; g.kinds[kind] = (g.kinds[kind] || 0) + 1; breakStreak();
+  if (elim) { g.elim++; g.lives--; } else g.graves++;
+  player.inv = 1.2;
+  feedback('bad', text + (elim ? ' · falta eliminatoria' : ' · falta grave'));
+  floatText(player.x, player.y - 56, elim ? '−1 vida' : '−10 nota', '#E53935');
+  log('infraccion', it, kind);
+  if (!g.lessonSeen[kind]) { g.lessonSeen[kind] = true; showLesson(kind, why); }
+  else if (g.lives <= 0) { g.pendingEnd = true; setTimeout(() => { if (state === 'playing') finish(false); }, 900); }
+}
+function fastenBelt() {
+  if (MODE !== 'conductor' || state !== 'playing' || g.belt) return;
+  g.belt = true; document.body.classList.remove('nobelt'); $('spBelt').classList.add('on');
+  if (!g.beltWarned) { g.score += 20; feedback('ok', '+20 · Cinturón abrochado'); log('cinturon', null, 'abrochado'); }
+}
+
+/* ---------- actualización del modo conductor ---------- */
+function dUpdate(dt) {
+  g.time += dt; g.play += dt;
+  dTraffic(dt); dNpc(dt); updateEffects(dt);
+  if (g.distractT > 0) { g.distractT -= dt; if (g.distractT <= 0) $('phoneBig').classList.remove('show'); }
+  if (notif) { notif.t -= dt; $('nBar').style.width = Math.max(0, notif.t / 5 * 100) + '%'; if (notif.t <= 0) resolveNotif('ignorar'); }
+
+  // arrancar sin cinturón
+  if (keys.right && !g.belt && !g.beltWarned) {
+    g.beltWarned = true; g.belt = true; document.body.classList.remove('nobelt'); $('spBelt').classList.add('on');
+    dInfraction('cinturon', 'Arrancaste sin el cinturón de seguridad', null); return;
+  }
+  const distracted = g.distractT > 0;
+  const braking = keys.left || keys.brake;
+  if (braking) player.v -= BRK * (distracted ? 0.35 : 1) * dt;
+  else if (keys.right) player.v += ACC * dt;
+  else player.v -= DRAG * dt;
+  player.v = Math.max(0, Math.min(VMAX, player.v));
+  player.braking = braking && player.v > 0.5;
+  if (!distracted) { if (keys.up) player.ty = LANE_L; if (keys.down) player.ty = LANE_R; }
+  const dy = player.ty - player.y; player.y += Math.sign(dy) * Math.min(Math.abs(dy), 200 * dt);
+  if ((keys.right || keys.up || keys.down) && !g.moved) { g.moved = true; g.firstMove = g.play; log('primer_movimiento', null); }
+
+  const prevFront = player.x + CAR_L / 2;
+  player.x += player.v * dt;
+  const front = player.x + CAR_L / 2, kmh = player.v / KMH;
+
+  // zonas de velocidad (Art. 162)
+  const z = zoneAt(player.x);
+  if (z !== g.zone) { g.zone = z; if (g.play > 0.5) { floatText(player.x + 160, R_TOP - 40, `${z.label}: máx. ${z.limit} km/h`, '#FFC400'); SFX.tick(); } }
+  if (kmh > z.limit + 3) { z.overT += dt; if (z.overT > 1.2 && !z.flagged) { z.flagged = true; dInfraction('velocidad', `Exceso de velocidad: ${Math.round(kmh)} km/h en zona de ${z.limit}`, null); return; } }
+  else z.overT = Math.max(0, z.overT - dt);
+
+  for (const it of items) {
+    const ps = dState(it);
+    if (ps.s === 'amber' && it.prevS !== 'amber') it.amberAt = g.time;
+    it.prevS = ps.s;
+    if (!it.lineDone && front > it.stopX - 170 && front <= it.stopX + 2) {
+      it.minV = Math.min(it.minV, player.v);
+      if (player.v < 10 && (ps.s === 'red' || ps.s === 'amber')) it.stoppedRed = true;
+    }
+    if (!it.zebraDone && front > it.zA - 210 && front <= it.zA + 2 && player.v < 10 && pedsOnRoad(it)) it.yielded = true;
+
+    if (!it.lineDone && prevFront <= it.stopX && front > it.stopX) {
+      it.lineDone = true;
+      if (it.type === 'semaforo') {
+        if (ps.s === 'red') { dInfraction('rojo_c', 'Pasaste con la luz roja', it); return; }
+        if (ps.s === 'amber' && g.time - it.amberAt > 1.0) dRisk(it, 'Con ámbar debías detenerte: podías hacerlo con seguridad');
+        else if (it.stoppedRed) dGood(it, 50, 'Esperaste la luz verde');
+      } else if (it.type === 'policia') {
+        if (ps.s === 'red') { dInfraction('policia_c', 'El policía indicó ALTO', it); return; }
+        if (ps.s === 'amber' && g.time - it.amberAt > 1.0) dRisk(it, 'El policía estaba deteniendo tu vía');
+        else dGood(it, 60, 'Obedeciste al policía');
+      } else if (it.type === 'pare') {
+        if (it.minV > 12) { dInfraction('pare', 'No hiciste la parada completa en PARE', it); return; }
+        if (crossDanger(it)) dRisk(it, 'Paraste, pero saliste con autos cruzando');
+        else dGood(it, 60, 'Parada completa en PARE');
+      } else if (it.type === 'ceda') {
+        if (crossDanger(it)) { dInfraction('ceda', 'No cediste el paso en la intersección', it); return; }
+        dGood(it, 40, 'Cediste el paso correctamente');
+      }
+    }
+    if (!it.zebraDone && prevFront <= it.zA && front > it.zA) {
+      it.zebraDone = true;
+      if (pedsOnRoad(it)) { dInfraction('peaton_c', 'No cediste el paso al peatón en la cebra', it); return; }
+      if (it.yielded) dGood(it, 50, it.school ? 'Cediste el paso a los escolares' : 'Cediste el paso al peatón');
+    }
+  }
+
+  // ambulancia detrás (código M25)
+  if (LV.ambAt != null && !g.ambDone && player.x > items[LV.ambAt].x + 350) {
+    g.ambDone = true;
+    amb = { type: 'ambulancia', x: player.x - 1200, y: LANE_L, v: 660, w: 124, h: 52, judged: false };
+    SFX.siren(); feedback('warn', '¡Ambulancia detrás! Pásate al carril derecho y reduce'); log('dilema_ambulancia', null);
+  }
+  if (amb) {
+    amb.x += amb.v * dt;
+    if (!amb.judged && amb.x + amb.w / 2 > player.x - CAR_L / 2 - 240) {
+      amb.judged = true; SFX.siren();
+      if (player.y < R_MID) { dInfraction('emergencia_c', 'No cediste el paso a la ambulancia', null); return; }
+      if (kmh > 35) dRisk(null, 'Te pasaste a la derecha, pero debías reducir más');
+      else { dGood(null, 75, 'Cediste el paso a la ambulancia'); award('rutalibre'); }
+    }
+    if (amb.x > player.x + 2400) amb = null;
+  }
+  // celular
+  if (LV.phoneAt != null && !g.phoneDone && !notif && player.x > items[LV.phoneAt].x - 760) { g.phoneDone = true; showNotif(items[LV.phoneAt]); }
+
+  // colisiones
+  if (player.inv <= 0) {
+    const px0 = player.x - CAR_L / 2, py0 = player.y - CAR_T / 2;
+    const hitR = (x, y, w, h) => x < px0 + CAR_L && x + w > px0 && y < py0 + CAR_T && y + h > py0;
+    for (const it of items) {
+      for (const p of it.peds) if (hitR(p.x - 10, p.y - 10, 20, 20)) {
+        p.gone = true; player.v = 0;
+        dInfraction('peaton_c', '¡Atropellaste a un peatón!', it); return;
+      }
+      for (const lane of it.cross) for (const c of lane.cars) if (hitR(lane.x - c.w / 2, c.y - c.h / 2, c.w, c.h)) {
+        player.v = 0; player.x = it.stopX - CAR_L / 2 - 40; it.lineDone = false; it.minV = 0;
+        dInfraction('choque_c', 'Chocaste con un vehículo que cruzaba', it); player.inv = 2; return;
+      }
+    }
+    for (const n of npcs) if (hitR(n.x - n.w / 2, n.y - n.h / 2, n.w, n.h)) {
+      player.v = 0; player.x = n.x - n.w / 2 - CAR_L / 2 - 24;
+      dInfraction('choque_c', 'Chocaste por alcance: guarda tu distancia', null); return;
+    }
+  } else player.inv -= dt;
+
+  if (player.x >= META_X) { g.score += 100; finish(true); return; }
+  if (g.fx) { g.fx.t -= dt; if (g.fx.t <= 0) g.fx = null; }
+  updateTutorial(dt);
+  updateHud();
+  dSpeedo(kmh, z);
+}
+let lastSpeedo = '';
+function dSpeedo(kmh, z) {
+  const over = kmh > z.limit + 3, k = Math.round(kmh) + '|' + z.limit + '|' + over;
+  if (k === lastSpeedo) return; lastSpeedo = k;
+  $('spVal').textContent = Math.round(kmh); $('spLim').textContent = z.limit;
+  $('speedo').classList.toggle('over', over);
+}
+function dSignalInfo() {
+  const front = player.x + CAR_L / 2;
+  const it = items.find(t => t.zB > front - 4);
+  const z = zoneAt(player.x), zl = `${z.label} · máx. ${z.limit} km/h`;
+  if (amb && !amb.judged) return { street: 'Vehículo de emergencia', text: '¡Ambulancia! Pásate a la derecha y reduce', color: '#E53935', red: true, green: null };
+  if (!g.belt) return { street: zl, text: 'Abróchate el cinturón antes de arrancar', color: '#E53935', red: true, green: null };
+  if (!it) return { street: zl, text: `Sigue hasta: ${LV.dest}`, color: '#FFC400', red: false, green: null };
+  const ps = dState(it), s = Math.ceil(ps.left), st = `${it.street} · ${zl}`;
+  if (pedsOnRoad(it) && front < it.zA + 4) return { street: st, text: it.school ? 'Escolares cruzando · Detente' : 'Peatones en la cebra · Detente', color: '#E53935', red: true, green: null };
+  if (it.type === 'semaforo') {
+    if (ps.s === 'red') return { street: st, text: `ROJO · Detente antes de la línea (${s} s)`, color: '#E53935', red: true, green: null };
+    if (ps.s === 'green') return { street: st, text: `VERDE · Avanza con precaución (${s} s)`, color: '#2ECC71', red: false, green: '#2ECC71' };
+    return { street: st, text: 'ÁMBAR · Detente si puedes hacerlo seguro', color: '#FF9800', red: false, green: '#FF9800' };
+  }
+  if (it.type === 'policia') {
+    if (ps.s === 'red') return { street: st + ' · semáforo apagado', text: `Policía: ALTO (${s} s)`, color: '#E53935', red: true, green: null };
+    if (ps.s === 'green') return { street: st + ' · semáforo apagado', text: `Policía: PASE (${s} s)`, color: '#2ECC71', red: false, green: '#2ECC71' };
+    return { street: st + ' · semáforo apagado', text: 'Policía: ¡atención, va a parar!', color: '#FF9800', red: false, green: '#FF9800' };
+  }
+  if (it.type === 'pare') {
+    const stopped = it.minV < 12 && it.stopX - front < 175;
+    if (!stopped) return { street: st, text: 'PARE · Detente por completo y mira', color: '#E53935', red: true, green: null };
+    return crossDanger(it) ? { street: st, text: 'PARE · Autos cruzando: espera', color: '#E53935', red: true, green: null }
+                           : { street: st, text: 'PARE · Vía libre: avanza', color: '#2ECC71', red: false, green: '#2ECC71' };
+  }
+  if (it.type === 'ceda') return crossDanger(it)
+    ? { street: st, text: 'CEDA EL PASO · Autos cruzando, espera', color: '#E53935', red: true, green: null }
+    : { street: st, text: 'CEDA EL PASO · Mira y continúa', color: '#FF9800', red: false, green: '#FF9800' };
+  return { street: st, text: it.school ? 'Zona escolar · Atento a los escolares' : 'Paso peatonal · Atento a los peatones', color: '#FF9800', red: false, green: null };
+}
+
+/* ---------- dibujo del modo conductor ---------- */
+function drawCarH(x, y, w, h, color, o = {}) {
+  const x0 = x - w / 2, y0 = y - h / 2;
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; rr(ctx, x0 + 4, y0 + 6, w, h, 12); ctx.fill();
+  ctx.fillStyle = color; rr(ctx, x0, y0, w, h, 12); ctx.fill();
+  ctx.strokeStyle = o.player ? '#14171A' : 'rgba(0,0,0,.35)'; ctx.lineWidth = o.player ? 4 : 3; ctx.stroke();
+  if (o.amb) {
+    ctx.fillStyle = '#D32F2F'; ctx.fillRect(x0 + 6, y - 4, w - 12, 8);
+    ctx.fillRect(x - 18, y - 14, 8, 28); ctx.fillRect(x - 28, y - 4, 28, 8);
+    const on = Math.floor(g.time * 8) % 2 === 0;
+    ctx.save(); ctx.shadowBlur = 26;
+    ctx.shadowColor = ctx.fillStyle = on ? '#E53935' : '#1E88E5'; ctx.fillRect(x + 6, y0 + 4, 12, h / 2 - 6);
+    ctx.shadowColor = ctx.fillStyle = on ? '#1E88E5' : '#E53935'; ctx.fillRect(x + 6, y + 2, 12, h / 2 - 6);
+    ctx.restore();
+  }
+  ctx.fillStyle = 'rgba(20,23,26,.65)';
+  rr(ctx, x + w / 2 - 34, y0 + 7, 20, h - 14, 5); ctx.fill();     // parabrisas (adelante = derecha)
+  rr(ctx, x0 + 10, y0 + 9, 12, h - 18, 4); ctx.fill();            // luna trasera
+  ctx.fillStyle = '#FFF59D'; ctx.fillRect(x + w / 2 - 5, y0 + 5, 4, 10); ctx.fillRect(x + w / 2 - 5, y0 + h - 15, 4, 10);
+  const bl = o.braking ? '#FF1744' : '#8E1B1B';                   // luces de freno (redundancia visual)
+  ctx.save(); if (o.braking) { ctx.shadowColor = '#FF1744'; ctx.shadowBlur = 18; }
+  ctx.fillStyle = bl; ctx.fillRect(x0 + 1, y0 + 5, 5, 11); ctx.fillRect(x0 + 1, y0 + h - 16, 5, 11); ctx.restore();
+}
+function drawPed(p) {
+  const s = p.kid ? 0.8 : 1, sw = Math.sin(p.ph) * 4 * s;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.scale(s, s);
+  ctx.fillStyle = '#3E2723'; ctx.fillRect(-6, -2 + sw, 4, 10); ctx.fillRect(2, -2 - sw, 4, 10);
+  ctx.fillStyle = p.c; rr(ctx, -11, -8, 22, 14, 7); ctx.fill();
+  if (p.kid) { ctx.fillStyle = '#FFC400'; rr(ctx, -8, -2 * p.dir - 6, 16, 9, 3); ctx.fill(); }
+  ctx.fillStyle = '#6D4C41'; ctx.beginPath(); ctx.arc(0, -1, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#212121'; ctx.beginPath(); ctx.arc(0, -2, 5, Math.PI, 0); ctx.fill();
+  ctx.restore();
+}
+function vehLight(x, y, ps, off) {
+  ctx.fillStyle = '#3A3F45'; ctx.fillRect(x + 13, y + 92, 6, 24);
+  ctx.fillStyle = '#14171A'; rr(ctx, x, y, 32, 94, 9); ctx.fill();
+  const blink = Math.floor(g.time * 4) % 2 === 0;
+  const L = (cy, col, on) => { ctx.save(); ctx.fillStyle = on && !off ? col : '#2c3136'; if (on && !off) { ctx.shadowColor = col; ctx.shadowBlur = 20; } ctx.beginPath(); ctx.arc(x + 16, cy, 11, 0, Math.PI * 2); ctx.fill(); ctx.restore(); };
+  L(y + 18, '#FF3B30', ps.s === 'red'); L(y + 47, '#FFB300', ps.s === 'amber'); L(y + 76, '#2EE07A', ps.s === 'green');
+}
+function signPare(cx, cy) {
+  ctx.fillStyle = '#3A3F45'; ctx.fillRect(cx - 3, cy + 20, 6, 30);
+  ctx.beginPath();
+  for (let k = 0; k < 8; k++) { const a = Math.PI / 8 + k * Math.PI / 4; ctx.lineTo(cx + Math.cos(a) * 24, cy + Math.sin(a) * 24); }
+  ctx.closePath(); ctx.fillStyle = '#D32F2F'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '800 12px Lexend, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('PARE', cx, cy + 1);
+}
+function signCeda(cx, cy) {
+  ctx.fillStyle = '#3A3F45'; ctx.fillRect(cx - 3, cy + 16, 6, 32);
+  ctx.beginPath(); ctx.moveTo(cx - 26, cy - 20); ctx.lineTo(cx + 26, cy - 20); ctx.lineTo(cx, cy + 22); ctx.closePath();
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#D32F2F'; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.fillStyle = '#14171A'; ctx.font = '800 8px Lexend, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('CEDA EL', cx, cy - 8); ctx.fillText('PASO', cx, cy + 1);
+}
+function signLimit(cx, cy, n, school) {
+  ctx.fillStyle = '#3A3F45'; ctx.fillRect(cx - 3, cy + 20, 6, 30);
+  ctx.beginPath(); ctx.arc(cx, cy, 23, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#D32F2F'; ctx.lineWidth = 6; ctx.stroke();
+  ctx.fillStyle = '#14171A'; ctx.font = '800 18px Lexend, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(n, cx, cy + 1);
+  if (school) {                                   // señal de zona escolar (pentágono amarillo)
+    const sx = cx + 58;
+    ctx.fillStyle = '#3A3F45'; ctx.fillRect(sx - 3, cy + 20, 6, 30);
+    ctx.beginPath(); ctx.moveTo(sx, cy - 28); ctx.lineTo(sx + 24, cy - 8); ctx.lineTo(sx + 24, cy + 22); ctx.lineTo(sx - 24, cy + 22); ctx.lineTo(sx - 24, cy - 8); ctx.closePath();
+    ctx.fillStyle = '#D4E157'; ctx.fill(); ctx.strokeStyle = '#14171A'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#14171A'; ctx.font = '800 8px Lexend, system-ui'; ctx.fillText('ZONA', sx, cy + 2); ctx.fillText('ESCOLAR', sx, cy + 12);
+  }
+}
+function dDraw() {
+  const W = canvas.width, H = canvas.height;
+  const inGame = state === 'playing' || state === 'paused' || state === 'lesson' || state === 'intro';
+  const hudPx = inGame ? hud.getBoundingClientRect().height * dpr : 0;
+  const viewH = H - hudPx;
+  const s = Math.min(viewH / WORLD_H, W / (W < H ? 560 : 760));   // en vertical, más zoom
+  yExtra = Math.max(0, (viewH / s - WORLD_H) / 2);
+  const viewWW = W / s;
+  const follow = document.body.classList.contains('touch') ? 0.38 : 0.28;
+  let camX = Math.max(-500, Math.min(WORLD_W - viewWW, player.x - viewWW * follow));
+  let shY = 0;
+  if (g.shake > 0) { camX += (Math.random() - .5) * 26 * g.shake; shY = (Math.random() - .5) * 26 * g.shake; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#8E8B85'; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(s, 0, 0, s, -camX * s, hudPx + (yExtra + shY) * s);
+  const top = -yExtra, bot = WORLD_H + yExtra;
+
+  // edificios (fondo desaturado)
+  const edges = [-900];
+  items.forEach(it => { if (it.type !== 'cebra') edges.push(it.x, it.x + CROSS_W); });
+  edges.push(WORLD_W + 900);
+  let bi = 0;
+  for (let k = 0; k < edges.length; k += 2) {
+    const a = edges[k], b = edges[k + 1], segW = b - a, n = Math.max(1, Math.ceil(segW / 420)), bw = segW / n;
+    for (let j = 0; j < n; j++) {
+      const x0 = a + j * bw + 22, w0 = bw - 44; if (w0 < 40) continue;
+      [[top + 20, R_TOP - 82], [R_BOT + 82, bot - 20]].forEach(([y0, y1]) => {
+        if (y1 - y0 < 30) return;
+        const c = bi++ % 2 ? ['#A39F98', '#B5B1AA'] : ['#9A968F', '#ACA8A1'];
+        ctx.fillStyle = c[0]; rr(ctx, x0, y0, w0, y1 - y0, 8); ctx.fill();
+        if (y1 - y0 > 60) { ctx.fillStyle = c[1]; rr(ctx, x0 + 20, y0 + 20, w0 - 40, y1 - y0 - 40, 4); ctx.fill(); }
+      });
+    }
+  }
+  // veredas y calzada principal
+  ctx.fillStyle = '#C4C1BA'; ctx.fillRect(-900, R_TOP - 62, WORLD_W + 1800, 62); ctx.fillRect(-900, R_BOT, WORLD_W + 1800, 62);
+  ctx.fillStyle = '#A8A49D'; ctx.fillRect(-900, R_TOP - 6, WORLD_W + 1800, 6); ctx.fillRect(-900, R_BOT, WORLD_W + 1800, 6);
+  ctx.fillStyle = '#4B5057'; ctx.fillRect(-900, R_TOP, WORLD_W + 1800, R_BOT - R_TOP);
+  // calles transversales
+  for (const it of items) if (it.type !== 'cebra') {
+    ctx.fillStyle = '#4B5057'; ctx.fillRect(it.x, top, CROSS_W, bot - top);
+    ctx.fillStyle = '#D5D8DB';
+    for (let y = Math.floor(top / 80) * 80; y < bot; y += 80) { if (y + 40 > R_TOP - 20 && y < R_BOT + 20) continue; ctx.fillRect(it.x + CROSS_W / 2 - 3, y, 6, 40); }
+    ctx.fillStyle = '#E8EAEC'; ctx.fillRect(it.x + 8, R_TOP - 22, CROSS_W / 2 - 16, 6); ctx.fillRect(it.x + CROSS_W / 2 + 8, R_BOT + 16, CROSS_W / 2 - 16, 6);
+  }
+  // línea de carril discontinua
+  ctx.fillStyle = '#E8EAEC';
+  for (let x = Math.floor((camX - 100) / 90) * 90; x < camX + viewWW + 100; x += 90) {
+    if (items.some(it => (it.type !== 'cebra' && x + 50 > it.x && x < it.x + CROSS_W) || (x + 50 > it.stopX - 8 && x < it.zB + 4))) continue;
+    ctx.fillRect(x, R_MID - 3, 50, 6);
+  }
+  // cebras, líneas de parada, señales
+  for (const it of items) {
+    ctx.fillStyle = '#FFC400';
+    for (let y = R_TOP + 8; y < R_BOT - 8; y += 30) ctx.fillRect(it.zA, y, ZEBRA_A - ZEBRA_B, 17);
+    if (it.type !== 'cebra') { ctx.fillStyle = '#F2F3F4'; ctx.fillRect(it.stopX - 6, R_TOP + 4, 6, R_BOT - R_TOP - 8); }
+    if (it.type === 'ceda') { ctx.fillStyle = '#F2F3F4'; for (let y = R_TOP + 12; y < R_BOT - 10; y += 26) { ctx.beginPath(); ctx.moveTo(it.stopX - 26, y); ctx.lineTo(it.stopX - 26, y + 18); ctx.lineTo(it.stopX - 10, y + 9); ctx.closePath(); ctx.fill(); } }
+    if (it.type === 'pare') { ctx.save(); ctx.fillStyle = 'rgba(242,243,244,.9)'; ctx.font = '800 26px Lexend, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.translate(it.stopX - 44, LANE_R); ctx.rotate(-Math.PI / 2); ctx.fillText('PARE', 0, 0); ctx.restore(); }
+    const ps = dState(it);
+    if (it.type === 'semaforo' || it.type === 'policia') { vehLight(it.stopX - 54, R_BOT + 8, ps, it.type === 'policia'); vehLight(it.stopX - 54, R_TOP - 120, ps, it.type === 'policia'); }
+    if (it.type === 'pare') signPare(it.stopX - 40, R_BOT + 32);
+    if (it.type === 'ceda') signCeda(it.stopX - 40, R_BOT + 30);
+    if (it.type === 'cebra' && !it.school) {
+      const sx = it.zA - 60, sy = R_BOT + 12;
+      ctx.fillStyle = '#3A3F45'; ctx.fillRect(sx + 19, sy + 40, 4, 22);
+      ctx.fillStyle = '#1565C0'; rr(ctx, sx, sy, 42, 42, 6); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(sx + 21, sy + 6); ctx.lineTo(sx + 37, sy + 36); ctx.lineTo(sx + 5, sy + 36); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#14171A'; ctx.fillRect(sx + 13, sy + 29, 16, 3); ctx.fillRect(sx + 15, sy + 23, 12, 3);
+    }
+    if (it.type !== 'cebra') {
+      ctx.font = '700 17px Lexend, system-ui, sans-serif';
+      const tw = ctx.measureText(it.street).width + 24;
+      ctx.fillStyle = '#1E4E8C'; rr(ctx, it.x + CROSS_W + 14, R_BOT + 14, tw, 36, 8); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.street, it.x + CROSS_W + 14 + tw / 2, R_BOT + 33);
+    }
+  }
+  zones.forEach(z => signLimit(Math.max(260, z.x0 + 60), R_BOT + 34, z.limit, z.school));
+  // vehículos transversales, peatones, policía
+  for (const it of items) {
+    for (const lane of it.cross) for (const c of lane.cars) drawVehicle(lane.x, c, lane.dir);
+    for (const p of it.peds) drawPed(p);
+    if (it.type === 'policia') {
+      const cx = it.x - 24, cy = R_TOP - 30, ps = dState(it);
+      ctx.fillStyle = '#9AA0A6'; ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#3E5B3A'; rr(ctx, cx - 16, cy - 8, 32, 18, 8); ctx.fill();
+      ctx.strokeStyle = '#3E5B3A'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath();
+      if (ps.s === 'green') { const a = Math.sin(g.time * 8) * 0.5; ctx.moveTo(cx + 12, cy); ctx.lineTo(cx + 12 + Math.cos(a) * 22, cy + Math.sin(a) * 22); }
+      else { ctx.moveTo(cx - 12, cy); ctx.lineTo(cx - 30, cy); ctx.moveTo(cx + 12, cy); ctx.lineTo(cx + 30, cy); }
+      ctx.stroke();
+      ctx.fillStyle = '#F5F5F5'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill();
+      label(ps.s === 'green' ? 'PASE' : ps.s === 'red' ? 'ALTO' : '¡ATENCIÓN!', cx, cy - 46, ps.s === 'green' ? '#15803D' : ps.s === 'red' ? '#D32F2F' : '#FF9800', ps.s === 'amber' ? '#14171A' : '#FFFFFF', 16);
+    }
+  }
+  for (const n of npcs) drawCarH(n.x, n.y, n.w, n.h, n.color, { braking: n.braking });
+  // meta
+  const cell = 20;
+  for (let yy = R_TOP; yy < R_BOT; yy += cell) for (let i = 0; i < 2; i++) { ctx.fillStyle = ((yy / cell) + i) % 2 ? '#14171A' : '#FFFFFF'; ctx.fillRect(META_X - cell + i * cell, yy, cell, cell); }
+  label('META · ' + LV.dest.toUpperCase(), META_X, R_TOP - 34, '#FFFFFF', '#14171A', 18);
+  // jugador (amarillo, figura principal) y ambulancia
+  const blink = player.inv > 0 && Math.floor(player.inv * 10) % 2 === 0;
+  ctx.globalAlpha = blink ? 0.45 : 1;
+  ctx.fillStyle = 'rgba(255,196,0,.30)'; rr(ctx, player.x - CAR_L / 2 - 8, player.y - CAR_T / 2 - 8, CAR_L + 16, CAR_T + 16, 16); ctx.fill();
+  drawCarH(player.x, player.y, CAR_L, CAR_T, '#FFC400', { braking: player.braking, player: true });
+  ctx.globalAlpha = 1;
+  if (amb) drawCarH(amb.x, amb.y, amb.w, amb.h, '#FFFFFF', { amb: true });
+  // efectos
+  for (const p of g.particles) { ctx.save(); ctx.globalAlpha = Math.min(1, p.t * 1.5); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); }
+  for (const f of g.floats) {
+    ctx.globalAlpha = Math.min(1, f.t * 1.6); ctx.font = '800 26px Lexend, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 6; ctx.strokeStyle = '#14171A'; ctx.strokeText(f.text, f.x, f.y); ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); ctx.globalAlpha = 1;
+  }
+  if (g.distractT > 0) { ctx.fillStyle = '#5E35B1'; rr(ctx, player.x - 10, player.y - 58, 20, 32, 4); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
+  if (g.fx) {
+    const yy = player.y - CAR_T / 2 - 34 - (0.9 - g.fx.t) * 30;
+    ctx.globalAlpha = Math.min(1, g.fx.t * 2.5);
+    ctx.fillStyle = COLORS[g.fx.type]; ctx.strokeStyle = '#14171A'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(player.x, yy, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = g.fx.type === 'warn' ? '#14171A' : '#FFFFFF'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (g.fx.type === 'ok') { ctx.moveTo(player.x - 8, yy); ctx.lineTo(player.x - 2, yy + 6); ctx.lineTo(player.x + 9, yy - 6); }
+    else if (g.fx.type === 'bad') { ctx.moveTo(player.x - 7, yy - 7); ctx.lineTo(player.x + 7, yy + 7); ctx.moveTo(player.x + 7, yy - 7); ctx.lineTo(player.x - 7, yy + 7); }
+    else { ctx.moveTo(player.x, yy - 9); ctx.lineTo(player.x, yy + 2); ctx.moveTo(player.x, yy + 8); ctx.lineTo(player.x, yy + 8.5); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+}
+
+/* =========================================================
    10. ESTRELLAS, MÉTRICAS, RANKING Y EXPORTACIÓN
    ========================================================= */
 const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
@@ -945,13 +1544,16 @@ const fmtT = t => { t = Math.round(t || 0); return Math.floor(t / 60) + ':' + St
 const r2 = v => v == null ? '' : Math.round(v * 100) / 100;
 function starsFor(won) {
   if (!won) return 0;
+  if (MODE === 'conductor') return g.elim > 0 ? 1 : dNota() >= 95 ? 3 : 2;
   if (g.cometidas > 0) return 1;
   if (g.riesgos > 0 || g.nearMiss > 0 || g.distrVistas > 0 || g.ambar > 0) return 2;
   return 3;
 }
 function buildSession(won, stars) {
   return {
-    id: 'RS-' + Date.now().toString(36).toUpperCase(), fecha: new Date().toISOString(), alias: '',
+    id: 'RS-' + Date.now().toString(36).toUpperCase(), fecha: new Date().toISOString(), alias: '', modo: MODE,
+    nota: MODE === 'conductor' ? dNota() : '', faltas_eliminatorias: g.elim || 0, faltas_graves: g.graves || 0, faltas_leves: g.leves || 0,
+    inf_detalle: Object.entries(g.kinds).filter(([, v]) => v).map(([k, v]) => k + ':' + v).join(' '),
     dispositivo: document.body.classList.contains('touch') ? 'tactil' : 'teclado',
     nivel: LVI + 1, entorno: LV.env, resultado: won ? 'meta' : 'sin_vidas', estrellas: stars,
     puntaje: g.score, tiempo_s: r2(g.play), vidas: Math.max(0, g.lives),
@@ -965,7 +1567,8 @@ function buildSession(won, stars) {
   };
 }
 function ranking(level) {
-  return loadStore().sessions.filter(s => level == null || s.nivel === level).sort((a, b) => b.puntaje - a.puntaje || a.tiempo_s - b.tiempo_s);
+  return loadStore().sessions.filter(s => (s.modo || 'peaton') !== 'examen' && (level == null || (s.nivel === level && (s.modo || 'peaton') === MODE)))
+    .sort((a, b) => b.puntaje - a.puntaje || a.tiempo_s - b.tiempo_s);
 }
 function fillRank(tbody, rows, cellsOf, cols, meId) {
   tbody.textContent = '';
@@ -983,8 +1586,9 @@ function renderResultsRank() {
   fillRank($('rRank'), rows, (s) => [all.indexOf(s) + 1, s.alias || 'Anónimo', s.puntaje, fmtT(s.tiempo_s)], 4, lastSessionId);
 }
 function renderData() {
-  const ss = loadStore().sessions, n = ss.length;
-  fillRank($('dRank'), ranking(null).slice(0, 10), (s, i) => [i + 1, s.alias || 'Anónimo', s.nivel, s.puntaje, '★'.repeat(s.estrellas || 0) || '—'], 5, null);
+  const all = loadStore().sessions, ss = all.filter(s => (s.modo || 'peaton') !== 'examen'), n = ss.length;
+  const sims = all.filter(s => s.modo === 'examen' && s.tipo === 'simulacro');
+  fillRank($('dRank'), ranking(null).slice(0, 10), (s, i) => [i + 1, s.alias || 'Anónimo', (s.modo === 'conductor' ? 'C' : 'P') + s.nivel, s.puntaje, '★'.repeat(s.estrellas || 0) || '—'], 5, null);
   const kinds = ['rojo', 'fuera_cebra', 'choque', 'emergencia', 'policia'];
   const names = { rojo: 'Cruzar en rojo', fuera_cebra: 'Fuera de la cebra', choque: 'Atropello', emergencia: 'No ceder a ambulancia', policia: 'Desobedecer al policía' };
   const tot = {}; kinds.forEach(k => tot[k] = ss.reduce((a, s) => a + (s['inf_' + k] || 0), 0));
@@ -1000,7 +1604,8 @@ function renderData() {
     [reac.length ? avg(reac).toFixed(2) + ' s' : '—', 'Reacción media al verde'],
     [fm.length ? Math.round(fm.filter(s => s.t_primer_mov_s < 15).length / fm.length * 100) + '%' : '—', 'Se movieron antes de 15 s (RNF-02)'],
     [dv + de ? Math.round(de / (dv + de) * 100) + '%' : '—', 'Distracciones evitadas'],
-    [n && tot[topK] ? names[topK] : '—', 'Infracción más frecuente']
+    [n && tot[topK] ? names[topK] : '—', 'Infracción más frecuente (peatón)'],
+    [sims.length ? Math.round(sims.filter(s => s.aprobado).length / sims.length * 100) + '%' : '—', `Simulacros MTC aprobados (${sims.length})`]
   ];
   const box = $('dMetrics'); box.textContent = '';
   m.forEach(([v, l]) => { const d = document.createElement('div'); d.className = 'metric'; const b = document.createElement('b'); b.textContent = v; const sp = document.createElement('span'); sp.textContent = l; d.append(b, sp); box.appendChild(d); });
@@ -1014,7 +1619,7 @@ function download(name, rows) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
 }
 $('expSessions').onclick = () => {
-  const cols = ['id', 'fecha', 'alias', 'dispositivo', 'nivel', 'entorno', 'resultado', 'estrellas', 'puntaje', 'tiempo_s', 'vidas', 'cruces_seguros', 'cruces_riesgosos', 'cruces_ambar', 'casi_atropellos',
+  const cols = ['id', 'fecha', 'alias', 'dispositivo', 'modo', 'tipo', 'nivel', 'nota', 'faltas_eliminatorias', 'faltas_graves', 'faltas_leves', 'inf_detalle', 'correctas', 'total', 'aprobado', 'entorno', 'resultado', 'estrellas', 'puntaje', 'tiempo_s', 'vidas', 'cruces_seguros', 'cruces_riesgosos', 'cruces_ambar', 'casi_atropellos',
     'infracciones', 'inf_rojo', 'inf_fuera_cebra', 'inf_choque', 'inf_emergencia', 'inf_policia', 'distr_vistas', 'distr_evitadas', 'quesos', 'racha_max',
     't_primer_mov_s', 't_primer_cruce_seguro_s', 'reaccion_media_s', 'espera_media_s', 'pausas', 'lecciones', 'logros_nuevos'];
   download('ruta_segura_partidas.csv', [cols].concat(loadStore().sessions.map(s => cols.map(c => s[c]))));
@@ -1027,10 +1632,10 @@ $('expEvents').onclick = () => {
 let clearArmed = false;
 $('clearData').onclick = () => {
   if (!clearArmed) { clearArmed = true; $('clearData').textContent = '¿Seguro? Toca otra vez para borrar'; setTimeout(() => { clearArmed = false; $('clearData').textContent = 'Borrar todos los datos'; }, 4000); return; }
-  clearArmed = false; saveStore({ sessions: [] }); saveProg({ unlocked: 1, stars: {}, best: {}, logros: {}, waitsTotal: 0 });
+  clearArmed = false; saveStore({ sessions: [] }); saveProg({ unlocked: 1, unlockedC: 1, stars: {}, best: {}, logros: {}, waitsTotal: 0 });
   $('clearData').textContent = 'Datos borrados'; selLevel = 0; renderData(); renderLevels();
 };
-$('unlockAll').onclick = () => { const p = loadProg(); p.unlocked = LEVELS.length; saveProg(p); renderLevels(); $('unlockAll').textContent = 'Todos los niveles desbloqueados'; };
+$('unlockAll').onclick = () => { const p = loadProg(); p.unlocked = LEVELS.length; p.unlockedC = DLEVELS.length; saveProg(p); renderLevels(); $('unlockAll').textContent = 'Todos los niveles desbloqueados'; };
 $('aliasForm').onsubmit = e => {
   e.preventDefault();
   const alias = $('alias').value.trim().slice(0, 14);
@@ -1049,12 +1654,49 @@ function show(name) {
 }
 function setPlaying(on) { document.body.classList.toggle('playing', on); }
 
+const curList = () => MODE === 'conductor' ? DLEVELS : LEVELS;
+const starKey = lvl => MODE === 'conductor' ? 'c' + lvl : lvl;
+let selExam = 0;
+const MODE_HINT = {
+  peaton: 'Cruza Arequipa a pie: semáforos, cebras, ambulancias y distracciones.',
+  conductor: 'Maneja como en el examen práctico: cinturón, límites, PARE, peatones y nota final.',
+  examen: 'Preguntas tipo examen de reglas del MTC: 40 preguntas, 40 minutos, 35 para aprobar.'
+};
+function setMode(m) {
+  MODE = m;
+  document.body.classList.toggle('drive', MODE === 'conductor');
+  document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.mode === MODE)));
+  $('modeHint').textContent = MODE_HINT[MODE];
+  const p = loadProg();
+  if (MODE !== 'examen') selLevel = Math.min(MODE === 'conductor' ? (p.unlockedC || 1) : p.unlocked, curList().length) - 1;
+  reset(MODE === 'examen' ? 0 : selLevel);
+  renderLevels();
+}
 function renderLevels() {
   const p = loadProg(), row = $('lvRow'); row.textContent = '';
-  if (selLevel >= p.unlocked) selLevel = p.unlocked - 1;
+  const pt = $('playTxt'); const sm = document.createElement('small'); sm.style.fontSize = '.55em';
+  if (MODE === 'examen') {
+    row.className = 'lvrow two';
+    [['Práctica', '10 preguntas con explicación'], ['Simulacro MTC', '40 preguntas · 40 min · 35 para aprobar']].forEach(([t, d], i) => {
+      const b = document.createElement('button'); b.className = 'lv' + (i === selExam ? ' sel' : ''); b.setAttribute('aria-pressed', String(i === selExam));
+      const n = document.createElement('b'); n.textContent = t; n.style.fontSize = 'clamp(16px,2.6vh,22px)';
+      const nm = document.createElement('span'); nm.textContent = d;
+      b.append(n, nm); b.onclick = () => { selExam = i; SFX.click(); renderLevels(); };
+      row.appendChild(b);
+    });
+    pt.textContent = 'EMPEZAR '; sm.textContent = selExam ? '· SIMULACRO' : '· PRÁCTICA'; pt.appendChild(sm);
+    const sims = loadStore().sessions.filter(x => x.modo === 'examen' && x.tipo === 'simulacro');
+    const best = sims.reduce((a, x) => Math.max(a, x.correctas || 0), 0);
+    $('starTotal').textContent = sims.length ? `Mejor simulacro: ${best} / 40` : 'Aún no has rendido el simulacro';
+    return;
+  }
+  const list = curList(), unlocked = MODE === 'conductor' ? (p.unlockedC || 1) : p.unlocked;
+  row.className = 'lvrow' + (list.length === 3 ? ' three' : '');
+  if (selLevel >= unlocked) selLevel = unlocked - 1;
+  if (selLevel >= list.length) selLevel = list.length - 1;
   let total = 0;
-  LEVELS.forEach((L, i) => {
-    const b = document.createElement('button'), locked = i >= p.unlocked, st = p.stars[i + 1] || 0; total += st;
+  list.forEach((L, i) => {
+    const b = document.createElement('button'), locked = i >= unlocked, st = p.stars[starKey(i + 1)] || 0; total += st;
     b.className = 'lv' + (i === selLevel ? ' sel' : ''); b.disabled = locked;
     b.setAttribute('aria-pressed', String(i === selLevel));
     b.setAttribute('aria-label', locked ? `Nivel ${i + 1} bloqueado: completa el nivel anterior` : `Nivel ${i + 1}: ${L.name}, ${st} de 3 estrellas`);
@@ -1062,12 +1704,13 @@ function renderLevels() {
     const nm = document.createElement('span'); nm.textContent = L.name;
     const sr = document.createElement('div'); sr.className = 'st'; sr.innerHTML = locked ? ICON.lock : starSvg(st > 0) + starSvg(st > 1) + starSvg(st > 2);
     b.append(n, nm, sr);
-    b.onclick = () => { selLevel = i; SFX.click(); renderLevels(); };
+    b.onclick = () => { selLevel = i; SFX.click(); reset(selLevel); renderLevels(); };
     row.appendChild(b);
   });
-  const pt = $('playTxt'); pt.textContent = 'JUGAR '; const sm = document.createElement('small'); sm.style.fontSize = '.55em'; sm.textContent = `· NIVEL ${selLevel + 1}`; pt.appendChild(sm);
-  $('starTotal').textContent = `${total} / ${LEVELS.length * 3} estrellas`;
+  pt.textContent = MODE === 'conductor' ? 'MANEJAR ' : 'JUGAR '; sm.textContent = `· NIVEL ${selLevel + 1}`; pt.appendChild(sm);
+  $('starTotal').textContent = `${total} / ${list.length * 3} estrellas`;
 }
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => { SFX.click(); setMode(b.dataset.mode); });
 
 // Escena: primero la tarjeta del nivel (capa), luego la cuenta regresiva y a jugar
 let introTimers = [];
@@ -1079,13 +1722,17 @@ function startLevel(i) {
   tutEl.classList.remove('show', 'fade');
   $('lvLabel').textContent = `NIVEL ${i + 1}`; $('destLabel').textContent = ` · HACIA ${LV.dest.toUpperCase()}`;
   g.lastHud = ''; updateHud();
-  $('iLevel').textContent = `NIVEL ${i + 1} DE ${LEVELS.length}` + (LV.env === 'noche' ? ' · NOCHE' : LV.env === 'lluvia' ? ' · LLUVIA' : '');
+  const drive = MODE === 'conductor';
+  document.body.classList.toggle('nobelt', drive);
+  $('spBelt').classList.remove('on'); lastSpeedo = '';
+  $('iLevel').textContent = (drive ? 'CONDUCTOR · ' : '') + `NIVEL ${i + 1} DE ${curList().length}` + (LV.env === 'noche' ? ' · NOCHE' : LV.env === 'lluvia' ? ' · LLUVIA' : '');
   $('iTitle').textContent = LV.name;
-  $('iDest').textContent = `Destino: ${LV.dest} · ${N_ROADS} cruces`;
+  $('iDest').textContent = drive ? `Destino: ${LV.dest} · ${N_ROADS} intersecciones · nota mínima 80 y sin faltas eliminatorias` : `Destino: ${LV.dest} · ${N_ROADS} cruces`;
   const chips = $('iChips'); chips.textContent = '';
   LV.news.forEach(t => { const c = document.createElement('span'); c.className = 'chip new'; c.textContent = 'Nuevo: ' + t; chips.appendChild(c); });
-  const qc = document.createElement('span'); qc.className = 'chip'; qc.textContent = `${quesos.length} quesos helados por recoger`; chips.appendChild(qc);
-  const crit = ['Llega a la meta', 'Sin infracciones', 'Sin riesgos: sin ámbar, sin "por poco" y sin mirar el celular'];
+  if (!drive) { const qc = document.createElement('span'); qc.className = 'chip'; qc.textContent = `${quesos.length} quesos helados por recoger`; chips.appendChild(qc); }
+  const crit = drive ? ['Llega a la meta', 'Sin faltas eliminatorias (luz roja, peatón, choque, policía)', 'Nota de 95 o más']
+                     : ['Llega a la meta', 'Sin infracciones', 'Sin riesgos: sin ámbar, sin "por poco" y sin mirar el celular'];
   $('iCrit').innerHTML = crit.map((t, k) => `<div>${starSvg(true).repeat(k + 1)}${starSvg(false).repeat(2 - k)}<span></span></div>`).join('');
   [...$('iCrit').children].forEach((d, k) => { d.lastChild.textContent = crit[k]; });
   $('cdown').textContent = '';
@@ -1118,24 +1765,27 @@ function pauseGame() {
 function resumeGame() { if (state !== 'paused') return; state = 'playing'; show(null); }
 function toMenu() {
   introTimers.forEach(clearTimeout); introTimers = [];
-  state = 'menu'; setPlaying(false); tutEl.classList.remove('show');
-  reset(selLevel); renderLevels(); show('start');
+  state = 'menu'; setPlaying(false); tutEl.classList.remove('show'); document.body.classList.remove('nobelt');
+  reset(MODE === 'examen' ? 0 : selLevel); renderLevels(); show('start');
 }
 function finish(won) {
   if (state === 'results') return;
   state = 'results'; clearKeys(); tutEl.classList.remove('show'); hideNotif(); $('phoneBig').classList.remove('show');
-  const stars = starsFor(won);
-  const p = loadProg(), lvl = LVI + 1, prevBest = p.best[lvl] || 0;
+  document.body.classList.remove('nobelt');
+  const drive = MODE === 'conductor', list = curList();
+  const stars = starsFor(won), nota = drive ? dNota() : 0, aprobado = drive && won && g.elim === 0 && nota >= 80;
+  const p = loadProg(), lvl = LVI + 1, sk = starKey(lvl), prevBest = p.best[sk] || 0;
   if (won) {
-    p.stars[lvl] = Math.max(p.stars[lvl] || 0, stars);
-    p.best[lvl] = Math.max(prevBest, g.score);
-    if (lvl < LEVELS.length) p.unlocked = Math.max(p.unlocked, lvl + 1);
+    p.stars[sk] = Math.max(p.stars[sk] || 0, stars);
+    p.best[sk] = Math.max(prevBest, g.score);
+    if (lvl < list.length) { if (drive) p.unlockedC = Math.max(p.unlockedC || 1, lvl + 1); else p.unlocked = Math.max(p.unlocked, lvl + 1); }
     saveProg(p);
     if (g.cometidas === 0) award('ejemplar');
     if (stars === 3) award('perfecto');
     if (LV.env === 'noche') award('noctambulo');
     if (LV.env === 'lluvia') award('impermeable');
-    if (lvl === LEVELS.length) award('campeon');
+    if (!drive && lvl === LEVELS.length) award('campeon');
+    if (drive && aprobado && lvl === DLEVELS.length) award('brevete');
     SFX.win();
   }
   log('fin', null, won ? 'meta' : 'sin_vidas');
@@ -1143,14 +1793,22 @@ function finish(won) {
   const st = loadStore(); st.sessions.push(ses); saveStore(st);
   lastSessionId = ses.id; $('alias').value = '';
 
-  $('rLevel').textContent = `NIVEL ${lvl} · ${LV.name.toUpperCase()}`;
-  $('rTitle').textContent = won ? `¡Llegaste a ${LV.dest}!` : 'Fin de la partida';
-  $('rSub').textContent = won ? (g.score > prevBest && prevBest > 0 ? `¡Nuevo récord personal! Antes: ${prevBest} pts` : 'Resumen de partida · ¡Buen trabajo, peatón responsable!')
-                              : 'Te quedaste sin vidas. Revisa tus decisiones y reintenta.';
-  $('rBadge').style.background = won ? '#FFC400' : '#D32F2F';
-  $('rBadge').innerHTML = won ? ICON.flag : ICON.sad;
+  $('rLevel').textContent = (drive ? 'CONDUCTOR · ' : '') + `NIVEL ${lvl} · ${LV.name.toUpperCase()}`;
+  if (drive) {
+    $('rTitle').textContent = !won ? 'Examen práctico: DESAPROBADO' : aprobado ? 'Examen práctico: APROBADO' : 'Examen práctico: DESAPROBADO';
+    $('rSub').textContent = `Nota ${nota}/100 · ${g.elim} falta(s) eliminatoria(s) · ${g.graves} grave(s) · ${g.leves} leve(s). Se aprueba con 80 y sin faltas eliminatorias.`;
+  } else {
+    $('rTitle').textContent = won ? `¡Llegaste a ${LV.dest}!` : 'Fin de la partida';
+    $('rSub').textContent = won ? (g.score > prevBest && prevBest > 0 ? `¡Nuevo récord personal! Antes: ${prevBest} pts` : 'Resumen de partida · ¡Buen trabajo, peatón responsable!')
+                                : 'Te quedaste sin vidas. Revisa tus decisiones y reintenta.';
+  }
+  const good = drive ? aprobado : won;
+  $('rBadge').style.background = good ? '#FFC400' : '#D32F2F';
+  $('rBadge').innerHTML = good ? ICON.flag : ICON.sad;
   $('rScore').textContent = g.score; $('rOk').textContent = g.evitadas; $('rBad').textContent = g.cometidas;
-  $('rExtra').textContent = `${g.quesos}/${quesos.length}`; $('rExtraL').textContent = `Quesos · racha máx. ${g.maxStreak}`;
+  if (drive) { $('rExtra').textContent = `${nota}/100`; $('rExtraL').textContent = `Nota del examen · racha máx. ${g.maxStreak}`; }
+  else { $('rExtra').textContent = `${g.quesos}/${quesos.length}`; $('rExtraL').textContent = `Quesos · racha máx. ${g.maxStreak}`; }
+  $('rOk').nextElementSibling.textContent = drive ? 'Decisiones correctas' : 'Infracciones evitadas';
   const sw = $('rStars'); sw.innerHTML = starSvg(true) + starSvg(true) + starSvg(true);
   [...sw.children].forEach((el, k) => { if (k < stars) setTimeout(() => { el.classList.add('on'); SFX.star(k); }, 500 + k * 380); });
   sw.setAttribute('aria-label', `${stars} de 3 estrellas`);
@@ -1162,12 +1820,14 @@ function finish(won) {
     d.textContent = text; if (sub) { const s = document.createElement('small'); s.textContent = sub; d.appendChild(s); }
     li.append(i, d); ul.appendChild(li);
   };
-  if (g.evitadas) item(true, `Cruces seguros: ${g.evitadas} de ${N_ROADS}`);
+  if (g.evitadas) item(true, drive ? `Decisiones correctas: ${g.evitadas}` : `Cruces seguros: ${g.evitadas} de ${N_ROADS}`);
+  if (drive && g.belt && !g.beltWarned) item(true, 'Te abrochaste el cinturón antes de arrancar');
   if (g.distrEvitadas) item(true, `No miraste el celular ${g.distrEvitadas} ${g.distrEvitadas === 1 ? 'vez' : 'veces'}`);
   Object.keys(g.kinds).forEach(k => { if (g.kinds[k]) item(false, `${KIND_LABEL[k]} ×${g.kinds[k]}`, LESSONS[k].ref.replace('Reglamento Nacional de Tránsito, ', 'RNT ') + ': ' + LESSONS[k].n); });
-  if (g.distrVistas) item(false, `Miraste el celular ×${g.distrVistas}`, 'Al mirar el celular caminas más lento y dejas de ver el tránsito.');
+  if (g.distrVistas && !drive) item(false, `Miraste el celular ×${g.distrVistas}`, 'Al mirar el celular caminas más lento y dejas de ver el tránsito.');
+  if (drive && g.leves) item(false, `Faltas leves ×${g.leves}`, 'Ámbar tardío, salir con autos cruzando o no reducir lo suficiente ante la ambulancia.');
   if (g.nearMiss) item(false, `Casi te atropellan ×${g.nearMiss}`, 'Un vehículo pasó muy cerca: espera a que estén detenidos.');
-  if (g.riesgos) item(false, `Cruces con riesgo ×${g.riesgos}`, 'Iniciaste el cruce con el semáforo por cambiar o con autos en movimiento.');
+  if (g.riesgos && !drive) item(false, `Cruces con riesgo ×${g.riesgos}`, 'Iniciaste el cruce con el semáforo por cambiar o con autos en movimiento.');
   if (!ul.children.length) item(true, 'Sin decisiones registradas');
 
   const lw = $('rLogros'); lw.textContent = '';
@@ -1175,18 +1835,29 @@ function finish(won) {
   $('rLogrosWrap').style.display = g.newLogros.length ? 'flex' : 'none';
 
   const k = g.kinds;
-  $('rTip').textContent = k.choque ? (LV.env === 'lluvia' ? TIPS.lluvia : LV.env === 'noche' ? TIPS.noche : TIPS.choque) : k.emergencia ? TIPS.emergencia : k.policia ? TIPS.policia : k.rojo ? TIPS.rojo :
+  if (drive) {
+    const dt = k.peaton_c ? 'Al acercarte a una cebra, reduce y mira a ambos lados: el peatón tiene derecho de paso.'
+      : k.rojo_c ? 'Con ámbar, empieza a frenar si puedes detenerte con seguridad; no aceleres para "ganarle" al rojo.'
+      : k.velocidad ? 'Revisa siempre el velocímetro: 30 km/h en calles y zonas escolares, 50 km/h en avenidas.'
+      : k.pare ? 'En PARE el auto debe quedar totalmente detenido antes de la línea, aunque no venga nadie.'
+      : k.celular_c ? 'Antes de arrancar, deja el celular fuera de tu alcance o en modo no molestar.'
+      : k.cinturon ? 'Cinturón primero: en el examen práctico es lo primero que revisa el evaluador.'
+      : k.choque_c ? 'Deja al menos dos segundos de distancia con el auto de adelante.'
+      : 'Mira los espejos y señaliza antes de cambiar de carril.';
+    $('rTip').textContent = dt;
+  } else $('rTip').textContent = k.choque ? (LV.env === 'lluvia' ? TIPS.lluvia : LV.env === 'noche' ? TIPS.noche : TIPS.choque) : k.emergencia ? TIPS.emergencia : k.policia ? TIPS.policia : k.rojo ? TIPS.rojo :
     k.fuera ? TIPS.fuera : g.distrVistas ? TIPS.celular : LV.env === 'lluvia' ? TIPS.lluvia : LV.env === 'noche' ? TIPS.noche : TIPS.general[Math.floor(Math.random() * TIPS.general.length)];
-  const hasNext = won && lvl < LEVELS.length;
+  const hasNext = won && lvl < list.length && (!drive || aprobado || g.elim === 0);
   $('nextBtn').style.display = hasNext ? 'flex' : 'none';
   $('againBtn').classList.toggle('primary', !hasNext); $('againBtn').style.margin = '0';
   renderResultsRank();
   show('results');
 }
 
-$('playBtn').onclick = () => startLevel(selLevel);
+$('playBtn').onclick = () => { if (MODE === 'examen') { ensureAudio(); SFX.click(); if (window.RSExam) window.RSExam.start(selExam === 1 ? 'simulacro' : 'practica'); } else startLevel(selLevel); };
+$('beltBtn').onclick = () => { ensureAudio(); fastenBelt(); };
 $('goBtn').onclick = countdown;
-$('nextBtn').onclick = () => { selLevel = Math.min(LVI + 1, LEVELS.length - 1); startLevel(selLevel); };
+$('nextBtn').onclick = () => { selLevel = Math.min(LVI + 1, curList().length - 1); startLevel(selLevel); };
 $('againBtn').onclick = () => startLevel(LVI);
 $('controlsBtn').onclick = () => { SFX.click(); state = 'controls'; show('controls'); };
 $('dataBtn').onclick = () => { SFX.click(); state = 'data'; renderData(); show('data'); };
@@ -1215,6 +1886,9 @@ addEventListener('keydown', e => {
   const dir = KEYMAP[e.code];
   if (dir) { e.preventDefault(); if (state === 'playing') keys[dir] = true; return; }
   if (state === 'playing' && notif && (e.code === 'KeyQ' || e.code === 'KeyE')) { resolveNotif(e.code === 'KeyQ' ? 'guardar' : 'ver'); return; }
+  if (state === 'playing' && MODE === 'conductor' && e.code === 'KeyC') { fastenBelt(); return; }
+  if (state === 'playing' && MODE === 'conductor' && e.code === 'Space') { e.preventDefault(); keys.brake = true; return; }
+  if (state === 'exam') return;
   if (e.code === 'Escape') {
     e.preventDefault();
     if (state === 'playing') pauseGame();
@@ -1227,11 +1901,11 @@ addEventListener('keydown', e => {
   if ((e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space') && !(e.target instanceof HTMLButtonElement)) {
     if (state === 'lesson') { e.preventDefault(); closeLesson(); }
     else if (state === 'intro') { e.preventDefault(); countdown(); }
-    else if (e.code !== 'Space' && state === 'menu') startLevel(selLevel);
+    else if (e.code !== 'Space' && state === 'menu') $('playBtn').click();
     else if (e.code !== 'Space' && state === 'results') ($('nextBtn').style.display !== 'none' ? $('nextBtn') : $('againBtn')).click();
   }
 });
-addEventListener('keyup', e => { const dir = KEYMAP[e.code]; if (dir) keys[dir] = false; });
+addEventListener('keyup', e => { const dir = KEYMAP[e.code]; if (dir) keys[dir] = false; if (e.code === 'Space') keys.brake = false; });
 addEventListener('blur', () => { clearKeys(); pauseGame(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 
@@ -1254,8 +1928,23 @@ document.querySelectorAll('#dpad button').forEach(btn => {
    13. INICIO APP (carga) Y BUCLE PRINCIPAL
    ========================================================= */
 selLevel = Math.min(loadProg().unlocked, LEVELS.length) - 1;
-reset(selLevel);
-renderLevels();
+setMode('peaton');
+
+// API mínima para el módulo del examen (js/examen.js)
+window.RS = {
+  show: n => show(n), getState: () => state, setState: v => { state = v; }, toMenu: () => toMenu(),
+  SFX, ensureAudio, loadStore, saveStore, award, starSvg,
+  // ayuda para pruebas automáticas (no se usa en el juego)
+  dbg: () => {
+    if (MODE !== 'conductor' || !player) return null;
+    const front = player.x + CAR_L / 2, it = items.find(t => t.zB > front - 4), z = zoneAt(player.x);
+    const lead = npcs.filter(n => Math.abs(n.y - player.y) < 30 && n.x > player.x).sort((a, b) => a.x - b.x)[0];
+    return { kmh: player.v / KMH, limit: z.limit, y: player.y, belt: g.belt, amb: !!(amb && !amb.judged),
+      next: it ? { type: it.type, dist: it.stopX - front, zdist: it.zA - front, s: dState(it).s, peds: pedsOnRoad(it), danger: crossDanger(it) } : null,
+      lead: lead ? lead.x - lead.w / 2 - front : null, toMeta: META_X - player.x,
+      px: player.x, py: player.y, cross: it ? it.cross.map(l => l.cars.map(c => ({ x: l.x, y: Math.round(c.y), w: c.w, h: c.h, t: c.type, mv: c.moving }))) : [], itx: it ? it.x : null };
+  }
+};
 setTimeout(() => {
   $('splash').classList.add('hide');
   state = 'menu'; show('start');
@@ -1265,8 +1954,10 @@ setTimeout(() => {
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (state === 'playing') update(dt);
-  else if (state === 'menu' || state === 'controls' || state === 'data' || state === 'intro' || state === 'boot') { g.time += dt; updateTraffic(dt); updateEffects(dt); }
+  if (state === 'playing') (MODE === 'conductor' ? dUpdate : update)(dt);
+  else if (state === 'menu' || state === 'controls' || state === 'data' || state === 'intro' || state === 'boot' || state === 'exam') {
+    g.time += dt; if (MODE === 'conductor') dTraffic(dt); else updateTraffic(dt); updateEffects(dt);
+  }
   else if (state === 'results') updateEffects(dt);
   draw();
   requestAnimationFrame(loop);
