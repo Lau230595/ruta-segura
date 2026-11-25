@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14171A">
+<title>Ruta Segura · Documentos del proyecto</title>
+<meta name="description" content="Informe, figuras y código fuente del videojuego Ruta Segura (IHC · EPIS · UNSA)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14171A;--ink2:#2A2F35;--muted:#5A6066;--yellow:#FFC400;--yellow-d:#B38900;--light:#F4F5F6;--line:#E3E5E8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--light);color:var(--ink);font-family:Lexend,"Segoe UI",Roboto,system-ui,sans-serif;line-height:1.5}
+a{color:inherit}
+header{background:var(--ink);color:#fff;border-bottom:6px solid var(--yellow)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.top{display:flex;align-items:center;gap:18px;padding:28px 0 32px;flex-wrap:wrap}
+.top svg{width:64px;height:64px;flex:none}
+.top h1{margin:0;font-size:clamp(28px,4.5vw,44px);letter-spacing:2px;line-height:1.1}
+.top p{margin:4px 0 0;color:#C9CDD1;font-size:clamp(14px,2vw,18px)}
+.play{margin-left:auto;display:inline-flex;align-items:center;gap:12px;background:var(--yellow);color:var(--ink);text-decoration:none;font-weight:800;font-size:22px;
+  padding:16px 28px;border-radius:18px;box-shadow:0 6px 0 var(--yellow-d);min-height:64px}
+.play:hover{background:#FFD54F}
+.play:focus-visible,.btn:focus-visible{outline:4px solid #1E88E5;outline-offset:3px}
+main{padding:32px 0 56px;display:flex;flex-direction:column;gap:28px}
+h2{margin:0 0 14px;font-size:clamp(20px,3vw,28px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.card h3{margin:0;font-size:20px}
+.card p{margin:0;color:#3A3F45;font-size:16px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px;border-radius:14px;border:3px solid var(--ink);text-decoration:none;font-weight:700;font-size:16px;background:#fff}
+.btn.dark{background:var(--ink);color:#fff}
+.btn svg{width:20px;height:20px}
+.tag{align-self:flex-start;font-size:13px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:999px;background:#FFF4D6;color:#7A5C00}
+figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px}
+figure img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
+figcaption{font-size:15px;color:var(--muted)}
+.viewer{background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.viewer iframe{display:block;width:100%;height:80vh;border:0}
+.ihc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.ihc div{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.ihc b{display:block;margin-bottom:4px}
+.ihc span{font-size:15px;color:#3A3F45}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;border:1px solid var(--line);font-size:15px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{background:var(--ink);color:#fff;font-weight:600}
+footer{background:var(--ink);color:#C9CDD1;font-size:14px;padding:22px 0}
+@media (max-width:700px){.viewer iframe{height:60vh}.play{margin-left:0;width:100%;justify-content:center}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <svg viewBox="0 0 120 120" role="img" aria-label="Logotipo de Ruta Segura">
+      <rect x="22" y="22" width="76" height="76" rx="14" transform="rotate(45 60 60)" fill="#FFC400" stroke="#fff" stroke-width="5"/>
+      <path d="M42 76 C 54 76, 50 58, 60 58 S 68 44, 78 44" fill="none" stroke="#14171A" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="42" cy="76" r="7" fill="#14171A"/><circle cx="78" cy="44" r="7" fill="#14171A"/>
+    </svg>
+    <div>
+      <h1>RUTA SEGURA</h1>
+      <p>Diseño centrado en el usuario de un videojuego de seguridad vial urbana · IHC · EPIS · UNSA</p>
+    </div>
+    <a class="play" href="index.html">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>Jugar ahora
+    </a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="h-docs">
+    <h2 id="h-docs">Documentos del proyecto</h2>
+    <div class="grid">
+      <div class="card">
+        <span class="tag">INFORME</span>
+        <h3>Ruta Segura: Diseño Centrado en el Usuario y Prototipado de Interfaz</h3>
+        <p>Artículo en formato IEEE: requerimientos, análisis del entorno, componentes de interfaz (C-01 a C-06) y diseño de la interfaz.</p>
+        <div class="actions">
+          <a class="btn dark" href="documentos/Proyecto_IHC_Ruta_Segura.pdf" target="_blank" rel="noopener">Ver PDF</a>
+          <a class="btn" href="documentos/Proyecto_IHC_Ruta_Segura.docx" download>Descargar Word</a>
+        </div>
+      </div>
+      <div class="card">
+        <span class="tag">CÓDIGO</span>
+        <h3>Código fuente del videojuego</h3>
+        <p>Proyecto para Visual Studio Code: HTML, CSS y JavaScript sin dependencias. Incluye la guía de ejecución.</p>
+        <div class="actions">
+          <a class="btn dark" href="documentos/codigo_fuente_RutaSegura.zip" download>Descargar ZIP</a>
+          <a class="btn" href="documentos/README.md" target="_blank" rel="noopener">Ver guía (README)</a>
+        </div>
+      </div>
+      <div class="card">
+        <span class="tag">FIGURAS</span>
+        <h3>Arquitectura de navegación y wireframes</h3>
+        <p>Fig. 1: flujo de estados del juego. Fig. 2: bocetos de baja fidelidad de las pantallas principales.</p>
+        <div class="actions">
+          <a class="btn dark" href="#figuras">Ver figuras</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-pdf">
+    <h2 id="h-pdf">Leer el informe aquí</h2>
+    <div class="viewer">
+      <iframe src="documentos/Proyecto_IHC_Ruta_Segura.pdf" title="Informe del proyecto Ruta Segura (PDF)" loading="lazy"></iframe>
+    </div>
+  </section>
+
+  <section id="figuras" aria-labelledby="h-fig">
+    <h2 id="h-fig">Figuras</h2>
+    <div class="grid" style="grid-template-columns:1fr">
+      <figure>
+        <img src="documentos/figuras/fig1_arquitectura_navegacion.png" alt="Diagrama de la arquitectura de navegación: Inicio App, Pantalla de Inicio, Modal de Controles, Escena Principal de Juego, Menú de Pausa y Resultados con sus transiciones." loading="lazy">
+        <figcaption>Fig. 1. Arquitectura de navegación y estados del videojuego Ruta Segura.</figcaption>
+      </figure>
+      <figure>
+        <img src="documentos/figuras/fig2_wireframes.png" alt="Wireframes de baja fidelidad: pantalla de inicio, escena principal de juego con HUD y pantalla de resultados." loading="lazy">
+        <figcaption>Fig. 2. Wireframes de baja fidelidad: (a) inicio, (b) escena de juego con HUD, (c) resultados.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-ihc">
+    <h2 id="h-ihc">Principios de IHC aplicados</h2>
+    <div class="ihc">
+      <div><b>Heurísticas de Nielsen</b><span>Visibilidad del estado (HUD y semáforo en tiempo real), control y libertad (pausa, salida con confirmación), prevención de errores y ayuda para recuperarse de ellos (micro-explicaciones con la norma).</span></div>
+      <div><b>Ley de Fitts</b><span>Botón Jugar grande y centrado; botones principales de 72 px o más; controles táctiles de 56 px o más; pausa siempre en la misma esquina.</span></div>
+      <div><b>Gestalt: figura-fondo</b><span>Ciudad en grises de sillar desaturados; jugador, cebras, semáforos, vehículos y alertas en colores saturados.</span></div>
+      <div><b>Redundancia y retroalimentación</b><span>Cada evento combina color, icono, texto y sonido, y responde en el mismo cuadro de juego (&lt; 100 ms).</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-lv">
+    <h2 id="h-lv">Niveles del juego</h2>
+    <table>
+      <thead><tr><th>Nivel</th><th>Destino</th><th>Desafío principal</th></tr></thead>
+      <tbody>
+        <tr><td>1 · Primeros pasos</td><td>Mercado San Camilo</td><td>Semáforo peatonal, cebra y cruce sin semáforo</td></tr>
+        <tr><td>2 · Hora punta</td><td>UNSA · Av. Independencia</td><td>Combis imprudentes y distracción con el celular</td></tr>
+        <tr><td>3 · Emergencias</td><td>Hospital Goyeneche</td><td>Ambulancias y policía de tránsito</td></tr>
+        <tr><td>4 · Noche en el Centro</td><td>Monasterio de Santa Catalina</td><td>Visibilidad reducida</td></tr>
+        <tr><td>5 · Lluvia en la Ciudad Blanca</td><td>Plaza de Armas</td><td>Pista mojada: los autos tardan en frenar</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Escuela Profesional de Ingeniería de Sistemas · Universidad Nacional de San Agustín de Arequipa · Normas citadas del TUO del Reglamento Nacional de Tránsito (D.S. N.° 016-2009-MTC).</div>
+</footer>
+</body>
+</html>

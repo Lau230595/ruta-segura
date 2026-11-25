@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14171A">
+<meta name="description" content="Ruta Segura: videojuego de seguridad vial urbana en Arequipa (IHC · EPIS · UNSA)">
+<title>Ruta Segura · Arequipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!--
+  =====================================================================
+  RUTA SEGURA — Videojuego de seguridad vial urbana (Arequipa, Perú)
+  Proyecto de Interacción Humano-Computador · EPIS · UNSA
+  ---------------------------------------------------------------------
+  ARQUITECTURA DE NAVEGACIÓN (Fig. 1 del informe)
+    Inicio App ──Carga──▶ Pantalla de Inicio (C-01: logo, Jugar, Controles, Mute)
+    Pantalla de Inicio ──Clic Controles──▶ Modal de Controles (Ayuda) ──Cerrar──▶ Inicio
+    Pantalla de Inicio ──Clic Jugar──▶ Escena Principal (C-02 HUD · C-03 Tutorial · C-04 Feedback)
+    Escena ──ESC / Pausa──▶ Menú de Pausa (C-05) ──Reanudar──▶ Escena
+    Menú de Pausa ──Confirmar salir──▶ Pantalla de Inicio
+    Escena ──Meta / Falla──▶ Resultados (C-06) ──Reintentar──▶ Escena · ──Menú──▶ Inicio
+  Extensiones que no agregan profundidad: selector de nivel dentro de C-01,
+  tarjeta de nivel y micro-explicaciones como capas sobre la Escena, y
+  "Siguiente nivel" en Resultados. "Datos IHC" es un modal para el equipo.
+  ---------------------------------------------------------------------
+  PRINCIPIOS DE IHC
+   · Nielsen: visibilidad del estado, control y libertad, prevención de
+     errores, reconocimiento antes que recuerdo, ayuda ante errores.
+   · Ley de Fitts: objetivos principales grandes y centrados (≥ 72 px).
+   · Gestalt figura-fondo: ciudad desaturada vs. elementos saturados.
+   · Redundancia sensorial + retroalimentación inmediata (< 100 ms).
+  =====================================================================
+-->
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<canvas id="game" aria-label="Escena del juego Ruta Segura" role="img"></canvas>
+
+<!-- ===================== Inicio App: carga ===================== -->
+<div id="splash" aria-label="Cargando Ruta Segura">
+  <svg width="96" height="96" viewBox="0 0 120 120" aria-hidden="true">
+    <rect x="22" y="22" width="76" height="76" rx="14" transform="rotate(45 60 60)" fill="#FFC400" stroke="#fff" stroke-width="5"/>
+    <path d="M42 76 C 54 76, 50 58, 60 58 S 68 44, 78 44" fill="none" stroke="#14171A" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="42" cy="76" r="7" fill="#14171A"/><circle cx="78" cy="44" r="7" fill="#14171A"/>
+  </svg>
+  <b>RUTA SEGURA</b>
+  <div class="sbar"><i></i></div>
+</div>
+
+<!-- ===================== HUD (C-02) ===================== -->
+<header id="hud">
+  <div class="hside">
+    <div class="hgroup">
+      <span class="hlabel">VIDAS</span>
+      <div id="hearts" role="img" aria-label="3 de 3 vidas"></div>
+    </div>
+    <div class="hgroup">
+      <span class="hlabel">PUNTAJE</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="score" class="hval">0000</span>
+        <span id="streak" aria-live="polite"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2s5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5S9 11 10.5 11C10.5 7 12 2 12 2z"/></svg><span id="streakTxt">x1.5</span></span>
+      </div>
+    </div>
+    <div class="hgroup hide-sm">
+      <span class="hlabel">QUESOS</span>
+      <div id="quesoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-2 12H7z" fill="#fff" stroke="#14171A" stroke-width="1.5"/><ellipse cx="12" cy="8" rx="7" ry="4" fill="#FFF3C4" stroke="#14171A" stroke-width="1.5"/><circle cx="10" cy="7.5" r="1" fill="#A0522D"/><circle cx="13.5" cy="8.5" r="1" fill="#A0522D"/></svg><span id="quesoTxt">0/0</span></div>
+    </div>
+  </div>
+  <div class="hcenter">
+    <span class="hlabel"><span id="lvLabel">NIVEL 1</span><span class="hide-sm" id="destLabel"> · HACIA …</span> · <span id="pct">0%</span></span>
+    <div class="prow">
+      <span class="pdot" aria-hidden="true"></span>
+      <div class="pbar" role="progressbar" aria-label="Progreso de ruta" aria-valuemin="0" aria-valuemax="100" id="pbar"><div id="pfill"></div></div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h13l-2.5 4L17 12H4"/></svg>
+    </div>
+  </div>
+  <div class="hside right">
+    <button id="muteHud" class="iconbtn" aria-label="Silenciar sonido"></button>
+    <button id="pauseBtn" class="iconbtn light" aria-label="Pausar partida (ESC)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
+      <span class="hide-sm">Pausa</span><span class="kbd hide-sm only-keys">ESC</span>
+    </button>
+  </div>
+</header>
+
+<div id="signal">
+  <div class="minilight" aria-hidden="true"><i id="mlRed"></i><i id="mlGreen"></i></div>
+  <div><small id="signalStreet">—</small><span id="signalText">—</span></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="achv" role="status" aria-live="polite">
+  <div class="medal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg></div>
+  <div><small>¡LOGRO DESBLOQUEADO!</small><b id="achvTxt">—</b></div>
+</div>
+<div id="flash" aria-hidden="true"></div>
+
+<!-- ===================== Tutorial (C-03) ===================== -->
+<div id="tutorial" aria-live="polite">
+  <div id="tcount" aria-label="Segundos de tutorial">10</div>
+  <span>
+    <span class="only-keys">Muévete con <span class="keys"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></span> o las flechas · </span>
+    <span class="only-touch">Muévete con las flechas de la pantalla · </span>
+    <b style="color:var(--yellow)">Espera el verde y cruza por la cebra</b>
+  </span>
+</div>
+
+<!-- ===================== Distracción: celular ===================== -->
+<div id="notif" role="alertdialog" aria-labelledby="nTitle" aria-describedby="nMsg">
+  <div class="nhead">
+    <div class="app" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+    <b id="nTitle">Grupo "Promo IHC"</b><span>ahora</span>
+  </div>
+  <p id="nMsg">¿Ya llegaste? Mira este video, está buenazo…</p>
+  <div class="nbtns">
+    <button id="nView">Ver mensaje <span class="kbd only-keys">E</span></button>
+    <button id="nSave" class="save">Guardar celular <span class="kbd only-keys">Q</span></button>
+  </div>
+  <div class="nbar"><i id="nBar"></i></div>
+</div>
+<div id="phoneBig" aria-hidden="true">
+  <div class="screenP">
+    <div class="bub" id="pb1">¿Ya llegaste?</div>
+    <div class="bub">Mira este video, está buenazo</div>
+    <div class="bub" style="height:90px;background:#cfd8dc"></div>
+    <div class="bub me">Ya casi, estoy cruzando…</div>
+    <div class="distr">Distraído: no ves el tránsito</div>
+  </div>
+</div>
+
+<!-- ===================== Controles táctiles ===================== -->
+<div id="dpad" aria-label="Controles táctiles">
+  <span></span>
+  <button data-dir="up" aria-label="Arriba"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg></button>
+  <span></span>
+  <button data-dir="left" aria-label="Izquierda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg></button>
+  <span></span>
+  <button data-dir="right" aria-label="Derecha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <span></span>
+  <button data-dir="down" aria-label="Abajo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+  <span></span>
+</div>
+
+<!-- ===================== C-01 · Pantalla de Inicio ===================== -->
+<section id="sStart" class="screen" aria-label="Pantalla de inicio">
+  <button id="muteStart" class="iconbtn" aria-label="Silenciar sonido"></button>
+  <div class="panel dark">
+    <svg viewBox="0 0 120 120" role="img" aria-label="Logotipo de Ruta Segura" style="width:clamp(52px,9vh,104px);height:clamp(52px,9vh,104px);flex:none">
+      <rect x="22" y="22" width="76" height="76" rx="14" transform="rotate(45 60 60)" fill="#FFC400" stroke="#fff" stroke-width="5"/>
+      <path d="M42 76 C 54 76, 50 58, 60 58 S 68 44, 78 44" fill="none" stroke="#14171A" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="42" cy="76" r="7" fill="#14171A"/><circle cx="78" cy="44" r="7" fill="#14171A"/>
+    </svg>
+    <h1 class="title">RUTA SEGURA</h1>
+    <p class="tag">5 rutas por Arequipa. Cada cruce es una decisión.</p>
+    <div class="lvrow" id="lvRow" role="group" aria-label="Elegir nivel"></div>
+    <button id="playBtn" class="btn primary">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg><span id="playTxt">JUGAR</span>
+    </button>
+    <button id="controlsBtn" class="btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>Controles
+    </button>
+    <p class="hint"><span class="only-keys">Pulsa <span class="key">ENTER</span> para jugar · </span><span id="starTotal">0 / 15 estrellas</span></p>
+    <p id="rotate">Consejo: gira tu celular en horizontal para ver más camino.</p>
+  </div>
+  <div id="footer"><span class="hide-sm">Feria de Proyectos · EPIS · UNSA</span><a id="docsLink" href="documentos.html">Documentos</a><button id="dataBtn">Datos IHC</button></div>
+</section>
+
+<!-- ===================== Modal de Controles (Ayuda) ===================== -->
+<section id="sControls" class="screen dim" aria-label="Controles">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ctTitle" style="width:min(1180px,100%)">
+    <div class="phead">
+      <h2 id="ctTitle">Controles</h2>
+      <button class="closebtn" data-close aria-label="Cerrar controles"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    </div>
+    <div class="cgrid">
+      <div class="ccard">
+        <h3>Moverse</h3>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span class="key">W</span><span class="keys"><span class="key">A</span><span class="key">S</span><span class="key">D</span></span></div>
+        <p>o las flechas del teclado. En celular: flechas en pantalla.</p>
+      </div>
+      <div class="ccard">
+        <h3>Celular</h3>
+        <div class="keys"><span class="key">Q</span><span class="key">E</span></div>
+        <p>Q guarda el celular · E lo mira. En pantalla táctil, toca el botón.</p>
+      </div>
+      <div class="ccard">
+        <h3>Pausar</h3>
+        <span class="key" style="min-width:3.2em">ESC</span>
+        <p>o el botón de pausa arriba a la derecha.</p>
+      </div>
+    </div>
+    <h3 style="font-size:clamp(18px,2.6vh,26px)">Señales viales y reglas básicas</h3>
+    <div class="sgrid">
+      <div class="sitem"><div class="dot" style="background:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div><b>Verde (PASE)</b><span>Cruza por la cebra</span></div></div>
+      <div class="sitem"><div class="dot" style="background:var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="3" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="13"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg></div><div><b>Ámbar</b><span>Va a cambiar: no inicies</span></div></div>
+      <div class="sitem"><div class="dot" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div><div><b>Rojo (ALTO)</b><span>Espera en la vereda</span></div></div>
+      <div class="sitem"><div class="dot" style="border-radius:10px;background:#4B5057 repeating-linear-gradient(90deg,#FFC400 0 7px,transparent 7px 14px)"></div><div><b>Cebra</b><span>Cruza solo aquí</span></div></div>
+      <div class="sitem"><div class="dot" style="background:#3E5B3A"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg></div><div><b>Policía</b><span>Su señal manda</span></div></div>
+      <div class="sitem"><div class="dot" style="background:#fff;border:3px solid var(--red)"><svg viewBox="0 0 24 24" fill="#D32F2F"><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div><div><b>Ambulancia</b><span>Cede siempre el paso</span></div></div>
+      <div class="sitem"><div class="dot" style="background:#E64A19"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div><b>Imprudentes</b><span>Mira a ambos lados</span></div></div>
+      <div class="sitem"><div class="dot" style="background:var(--purple)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div><b>Celular</b><span>Guárdalo al cruzar</span></div></div>
+    </div>
+    <button class="btn primary" data-close style="max-width:440px;align-self:center">Entendido</button>
+  </div>
+</section>
+
+<!-- ===================== Tarjeta de nivel (capa sobre la Escena) ===================== -->
+<section id="sIntro" class="screen dim" aria-label="Presentación del nivel">
+  <div class="panel dark" role="dialog" aria-modal="true" aria-labelledby="iTitle">
+    <p class="ilevel" id="iLevel">NIVEL 1</p>
+    <h2 class="ititle" id="iTitle">—</h2>
+    <p class="idest" id="iDest">—</p>
+    <div class="chips" id="iChips"></div>
+    <div class="crit" id="iCrit"></div>
+    <div id="cdown" aria-live="assertive"></div>
+    <button id="goBtn" class="btn primary" style="margin:0">¡Vamos! <span class="kbd only-keys" style="font-size:.45em">ENTER</span></button>
+  </div>
+</section>
+
+<!-- ===================== Micro-explicación (capa sobre la Escena) ===================== -->
+<section id="sLesson" class="screen dim" aria-label="Aprende de tu error">
+  <div class="panel" role="alertdialog" aria-modal="true" aria-labelledby="lTitle">
+    <div class="rhead">
+      <div class="badge" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div>
+      <div>
+        <p style="font-size:clamp(13px,1.8vh,16px);font-weight:700;color:var(--red);letter-spacing:1px">APRENDE DE TU ERROR · −1 VIDA</p>
+        <h2 id="lTitle" style="font-size:clamp(24px,4vh,38px);font-weight:800;line-height:1.15">—</h2>
+      </div>
+    </div>
+    <div class="lnorm"><b>La norma: </b><span id="lNorm">—</span><small id="lRef">—</small></div>
+    <p class="lwhy"><b>¿Por qué importa? </b><span id="lWhy">—</span></p>
+    <div class="lbar"><i id="lBar"></i></div>
+    <button id="lOk" class="btn primary" style="margin:0">Entendido <span class="kbd only-keys" style="font-size:.5em">ENTER</span></button>
+  </div>
+</section>
+
+<!-- ===================== C-05 · Menú de Pausa ===================== -->
+<section id="sPause" class="screen dim" aria-label="Pausa">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="pzTitle" style="width:min(640px,100%)">
+    <div id="pauseMain" style="display:flex;flex-direction:column;gap:inherit">
+      <h2 id="pzTitle" style="font-size:clamp(30px,5vh,48px);font-weight:800">Juego en pausa</h2>
+      <p id="pauseInfo" style="font-size:clamp(15px,2.2vh,22px);color:#3A3F45">Progreso</p>
+      <button id="resumeBtn" class="btn primary">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>Reanudar
+      </button>
+      <button id="restartBtn" class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Reiniciar nivel
+      </button>
+      <button id="exitBtn" class="btn ghost-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Salir al menú
+      </button>
+      <p class="hint only-keys" style="color:#5A6066">Pulsa <span class="key">ESC</span> para reanudar</p>
+    </div>
+    <div id="pauseConfirm" style="display:none;flex-direction:column;gap:inherit">
+      <h2 style="font-size:clamp(28px,4.6vh,44px);font-weight:800">¿Salir de la partida?</h2>
+      <p style="font-size:clamp(15px,2.2vh,22px);color:#3A3F45">Perderás el progreso de este nivel.</p>
+      <div class="btnrow">
+        <button id="cancelExit" class="btn">Cancelar</button>
+        <button id="confirmExit" class="btn danger">Sí, salir</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== C-06 · Resultados ===================== -->
+<section id="sResults" class="screen dim" aria-label="Resultados">
+  <div class="panel" style="width:min(1160px,100%)">
+    <div class="rhead">
+      <div id="rBadge" class="badge"></div>
+      <div style="flex:1;min-width:220px">
+        <p id="rLevel" style="font-size:clamp(13px,1.8vh,16px);font-weight:700;color:#5A6066;letter-spacing:1px">NIVEL 1</p>
+        <h2 id="rTitle" style="font-size:clamp(26px,4.6vh,46px);font-weight:800;line-height:1.1">—</h2>
+        <p id="rSub" style="font-size:clamp(14px,2vh,19px);color:#3A3F45">—</p>
+      </div>
+      <div class="bigstars" id="rStars" aria-label="Estrellas"></div>
+    </div>
+    <div class="stats">
+      <div class="stat" style="border:4px solid var(--yellow)"><b id="rScore">0</b><span>Puntaje final</span></div>
+      <div class="stat"><b id="rOk" style="color:var(--green)">0</b><span>Infracciones evitadas</span></div>
+      <div class="stat"><b id="rBad" style="color:var(--red)">0</b><span>Infracciones cometidas</span></div>
+      <div class="stat"><b id="rExtra">0</b><span id="rExtraL">Quesos · racha</span></div>
+    </div>
+    <div id="rLogrosWrap" class="card" style="display:none"><h3>Logros desbloqueados</h3><div class="logros" id="rLogros"></div></div>
+    <div class="cols">
+      <div class="card">
+        <h3>Repaso de tus decisiones</h3>
+        <ul id="rReview" class="rlist"></ul>
+      </div>
+      <div class="card">
+        <h3>Ranking del nivel <span id="rPos" style="color:#5A6066;font-weight:600"></span></h3>
+        <form id="aliasForm" autocomplete="off">
+          <label for="alias" style="position:absolute;left:-9999px">Tu alias</label>
+          <input id="alias" maxlength="14" placeholder="Tu alias (opcional)" enterkeyhint="done">
+          <button type="submit">Guardar</button>
+        </form>
+        <table class="rank"><thead><tr><th>#</th><th>Alias</th><th class="n">Pts</th><th class="n">Tiempo</th></tr></thead><tbody id="rRank"></tbody></table>
+      </div>
+    </div>
+    <div class="tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="#FFC400"/></svg>
+      <div><b>Consejo vial</b><p id="rTip">—</p></div>
+    </div>
+    <div class="btnrow">
+      <button id="nextBtn" class="btn primary" style="margin:0">Siguiente nivel
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <button id="againBtn" class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Reintentar
+      </button>
+      <button id="menuBtn" class="btn">Menú</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Datos IHC (modal del equipo) ===================== -->
+<section id="sData" class="screen dim" aria-label="Datos IHC">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dTitle" style="width:min(1180px,100%)">
+    <div class="phead">
+      <h2 id="dTitle">Datos IHC y ranking</h2>
+      <button class="closebtn" data-close aria-label="Cerrar"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14171A" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    </div>
+    <div class="cols">
+      <div class="card">
+        <h3>Top 10 de la feria</h3>
+        <table class="rank"><thead><tr><th>#</th><th>Alias</th><th class="n">Nivel</th><th class="n">Pts</th><th class="n">★</th></tr></thead><tbody id="dRank"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Exportar para la evaluación de usabilidad</h3>
+        <p style="font-size:clamp(14px,1.9vh,17px);color:#3A3F45">Los datos se guardan solo en este navegador. Descárgalos en CSV (Excel, SPSS, Google Sheets).</p>
+        <button id="expSessions" class="btn small">Descargar partidas (CSV)</button>
+        <button id="expEvents" class="btn small">Descargar eventos (CSV)</button>
+        <button id="unlockAll" class="btn small">Modo feria: desbloquear todos los niveles</button>
+        <button id="clearData" class="btn small ghost-danger">Borrar todos los datos</button>
+      </div>
+    </div>
+    <h3 style="font-size:clamp(18px,2.6vh,24px)">Métricas de usabilidad (IHC)</h3>
+    <div id="dMetrics" class="mgrid"></div>
+    <h3 style="font-size:clamp(18px,2.6vh,24px)">Principios IHC aplicados en la interfaz</h3>
+    <div class="ihc">
+      <div><b>Heurísticas de Nielsen</b>Visibilidad del estado (HUD, racha e indicador del semáforo en tiempo real), control y libertad (pausa con ESC, salida con confirmación, saltar la tarjeta de nivel), prevención de errores, reconocimiento antes que recuerdo (teclas dibujadas en el tutorial) y ayuda para recuperarse de errores (micro-explicaciones con la norma).</div>
+      <div><b>Ley de Fitts</b>Jugar es el objetivo más grande y está centrado; los botones principales miden 72 px o más, los selectores de nivel 64 px o más y los táctiles 56 px o más; la pausa siempre está en la misma esquina.</div>
+      <div><b>Gestalt: contraste figura-fondo</b>La ciudad usa grises de sillar desaturados (fondo); el jugador, las cebras, los semáforos, los vehículos, los quesos y las alertas usan colores saturados (figura). De noche, la luz de los postes y de los faros recorta las figuras.</div>
+      <div><b>Redundancia sensorial y retroalimentación inmediata</b>Cada evento combina color + icono + texto + sonido + vibración de cámara y aparece en el mismo cuadro de juego (&lt; 100 ms), así que funciona aunque el ruido de la feria tape el audio.</div>
+    </div>
+  </div>
+</section>
+
+<script src="js/juego.js"></script>
+</body>
+</html>
